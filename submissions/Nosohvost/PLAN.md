@@ -8,7 +8,7 @@ Run it with `node server.js` and open http://localhost:3000. Pressing R calls `w
 ## Core loop
 1. Call `whack()`, which returns 1–100 words.
 2. Tag each word with its part of speech and fuse known word pairs.
-3. Feed the tokens in one at a time, about 0.5s each. Hold SPACE to fast-forward.
+3. Feed tokens one at a time, waiting for entrances and attacks to finish, with reading pauses. Default 1×; buttons select 0.5×, 1×, 2× or 4×. Hold SPACE temporarily for 4×.
 4. The boss is **THE DEADLINE**, a giant angry clock. Its hands move toward 00:00 as the words run out.
 5. If the boss's HP hits 0, you win: "SHIPPED!". If you run out of words, you lose: "DEADLINE MISSED".
 6. Press R to call `whack()` again with a new army.

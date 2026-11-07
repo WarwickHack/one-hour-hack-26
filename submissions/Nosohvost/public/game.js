@@ -14,12 +14,12 @@ const C = {
 };
 const KIND_COLOR = { noun: C.noun, verb: C.verb, adj: C.adj, item: C.item, legend: C.legend, ult: C.ult, backfire: C.backfire, crash: C.crash };
 
-const GROUND = 500;           // top of the walkable floor
+const GROUND = 385;           // top of the walkable floor
 const BX = 1035, BY = 330;    // boss centre
-const STEP_TIME = 0.8;        // seconds per word at normal speed
+const STEP_TIME = 0.85;       // reading pause after each complete action
 
 // ---------- sprites ----------
-const SPRITE_KEYS = ["duck", "goose", "bug", "prod", "segfault", "rubber duck"];
+const SPRITE_KEYS = Engine.HERO_KEYS;
 const sprites = {};
 for (const k of SPRITE_KEYS) {
   const img = new Image();
@@ -82,16 +82,22 @@ bg.width = W; bg.height = H;
 })();
 
 // ---------- game state ----------
-let battle = null, phase = "loading", time = 0, stepTimer = 0, introT = 0, endT = 0;
+let battle = null, phase = "loading", time = 0, introT = 0, endT = 0;
 let vis = new Map();          // hero id -> visual
 let fx = [];                  // effects
 let bossShown = 0, bossFlash = 0, shake = 0, bossPush = 0, bossLunge = 0;
 let ribbonPos = 0, fast = false;
-let lastStepEvents = [];
+let speed = 1, paused = false, eventQueue = [], scheduled = [], actionWait = 0;
+const actionLabel = document.getElementById("action-label");
+function later(fn, delay) { scheduled.push({ fn, remaining: delay }); }
+function busy() {
+  return scheduled.length || fx.some(f => f.kind === "proj" || f.kind === "bolt") ||
+    [...vis.values()].some(v => v.anim || (!v.dead && !v.leaving && Math.abs(v.x - v.homeX) > 2));
+}
 
 function slotHome(k) {
   const col = k % 4, row = k >> 2;
-  return { x: 650 - col * 135 - row * 60, y: GROUND + 55 + row * 85 };
+  return { x: 660 - col * 155 - row * 35, y: 420 + row * 185 };
 }
 
 async function newBattle() {
@@ -101,7 +107,10 @@ async function newBattle() {
   catch { words = ["duck", "quack", "goose", "honk"]; }
   battle = new Engine.Battle(words);
   vis = new Map(); fx = [];
-  bossShown = battle.bossMax; ribbonPos = -1; stepTimer = 0;
+  eventQueue = []; scheduled = []; actionWait = 0; endT = 0;
+  bossFlash = 0; shake = 0; bossPush = 0; bossLunge = 0;
+  actionLabel.textContent = "The army assembles. Every word gets its moment.";
+  bossShown = battle.bossMax; ribbonPos = -1;
   phase = "intro"; introT = 2.4;
 }
 
@@ -129,7 +138,7 @@ function impact(d, tags, color, i = 0) {
   particle(x, y, "#fff", 6, 200);
   const size = d >= 200 ? 54 : d >= 90 ? 42 : d > 0 ? 32 : 26;
   floatText(x - 10, y - 30 - i * 24, String(d), d === 0 ? C.dim : d >= 90 ? C.legend : "#fff", size);
-  if (i === 0 && tags && tags.length) floatText(BX - 60, BY - 175, tags.join(" · "), C.adj, 18, 1.6);
+  if (i === 0 && tags && tags.length) tags.forEach((tag, j) => floatText(BX, 178 + j * 23, tag, C.adj, 16, 1.9));
 }
 
 const MELEE = new Set(["whack", "push", "merge", "conflict", "crash"]);
@@ -155,7 +164,7 @@ function handleEvent(e) {
       const v = vis.get(e.hero.id);
       if (v) {
         const kill = () => { v.dead = true; particle(v.x, v.y - 50, "#b9b4d6", 20, 220); };
-        if (v.anim) v.anim.after = kill; else setTimeout(kill, 250);
+        if (v.anim) v.anim.after = kill; else later(kill, 0.3);
       }
       break;
     }
@@ -197,7 +206,7 @@ function attack(e) {
   const v = vis.get(e.hero.id);
   const color = KIND_COLOR[e.verb === "stack overflow" ? "ult" : "verb"];
   const hit = (d, i) => impact(d, e.tags, VERB_FX[e.verb]?.color || color, i);
-  if (!v) { e.dmg.forEach((d, i) => setTimeout(() => hit(d, i), i * 150)); return; }
+  if (!v) { e.dmg.forEach((d, i) => later(() => hit(d, i), i * 0.35)); return; }
 
   if (e.verb === "stack overflow") {
     v.anim = { type: "cast", t: 0, dur: 0.6, fromX: v.x, fire: () => {
@@ -213,7 +222,7 @@ function attack(e) {
     v.anim = { type: "dash", t: 0, dur: e.verb === "crash" ? 0.5 : 0.62, fromX: v.x, toX: BX - 215, fire: () => {
       if (e.verb === "whack") fx.push({ kind: "hammer", x: BX - 150, y: BY - 10, life: 0.35, max: 0.35 });
       if (e.verb === "crash") { particle(BX - 120, BY, C.crash, 50, 500); floatText(BX - 120, BY - 120, "SEGMENTATION... no, NULL POINTER", C.crash, 20, 1.6); }
-      e.dmg.forEach((d, i) => setTimeout(() => hit(d, i), i * 140));
+      e.dmg.forEach((d, i) => later(() => hit(d, i), i * 0.35));
     } };
     return;
   }
@@ -234,17 +243,28 @@ function attack(e) {
 // ---------- update ----------
 function update(dt) {
   time += dt;
+  const due = [];
+  for (const job of scheduled) { job.remaining -= dt; if (job.remaining <= 0) due.push(job); }
+  scheduled = scheduled.filter(job => job.remaining > 0);
+  due.forEach(job => job.fn());
   if (phase === "intro") { introT -= dt; ribbonPos = lerp(ribbonPos, 0, 1 - Math.exp(-dt * 3)); if (introT <= 0) phase = "play"; }
   if (phase === "play") {
-    stepTimer -= dt;
-    if (stepTimer <= 0 && !battle.done) {
-      stepTimer = STEP_TIME;
-      lastStepEvents = battle.step();
-      lastStepEvents.forEach(handleEvent);
-    }
-    if (battle.done) {
-      const busy = fx.some((f) => f.kind === "proj") || [...vis.values()].some((v) => v.anim);
-      if (!busy) { endT += dt; if (endT > 1.2) { phase = "end"; endT = 0; if (battle.won) confetti(); } }
+    if (!busy()) {
+      actionWait = Math.max(0, actionWait - dt);
+      if (actionWait === 0 && eventQueue.length) {
+        const e = eventQueue.shift();
+        handleEvent(e);
+        if (e.type === "token") actionLabel.textContent = `${e.tok.text} · ${Engine.KIND_LABEL[e.tok.kind]}`;
+        else if (e.type === "attack") actionLabel.textContent = `${e.hero.name} uses ${e.verb.toUpperCase()}${e.tags.length ? " · " + e.tags.join(" · ") : ""}`;
+        else if (e.type === "bossAttack") actionLabel.textContent = `THE DEADLINE retaliates against ${e.hero.name}`;
+        actionWait = e.type === "token" ? 0.45 : e.type === "end" ? 0 : 0.7;
+      } else if (actionWait === 0 && !battle.done) {
+        eventQueue = battle.step();
+        actionWait = STEP_TIME;
+      } else if (actionWait === 0 && battle.done && !eventQueue.length) {
+        endT += dt;
+        if (endT > 1.4) { phase = "end"; endT = 0; if (battle.won) confetti(); }
+      }
     }
   }
   if (battle) ribbonPos = lerp(ribbonPos, Math.max(0, battle.i - 1), 1 - Math.exp(-dt * 8));
@@ -289,7 +309,7 @@ function confetti() {
 }
 
 // ---------- drawing ----------
-function spriteScale(v) { return v.h.scale * (0.9 + (v.y - GROUND) / 500); }
+function spriteScale(v) { return v.h.scale * (v.h.slot < 4 ? 0.74 : 0.84); }
 
 function drawHero(v) {
   const h = v.h, s = spriteScale(v);
@@ -323,15 +343,21 @@ function drawHero(v) {
   if (img) ctx.drawImage(img, -60, -120, 120, 120);
   else drawBlob(h);
   ctx.filter = "none"; ctx.shadowBlur = 0;
+  if (h.adjs.includes("warwick")) {
+    ctx.fillStyle = "#a654a5"; ctx.strokeStyle = C.ink; ctx.lineWidth = 2;
+    rr(-34, -51, 64, 12, 4); ctx.fill(); ctx.stroke();
+    ctx.fillRect(-30, -42, 14, 30);
+    ctx.fillStyle = "#eee2be"; ctx.fillRect(-30, -23, 14, 5);
+  }
   if (h.adjs.includes("one") || h.legend) drawCrown(h.legend ? "#ffc23a" : "#ffe27a");
   ctx.restore();
 
   // label + hp
-  const top = v.y - bob - 125 * s;
+  const top = v.y + 30;
   const adjs = h.adjs.map((a) => a.toUpperCase()).join(" ");
   const base = h.name.slice(adjs.length).trim();
-  if (adjs) text(adjs, v.x, top - 30, { size: 11, color: C.adj });
-  text(base, v.x, top - 16, { size: 14, color: h.legend ? C.legend : C.text });
+  if (adjs) text(adjs, v.x, top + 9, { size: Math.min(10, 145 / Math.max(1, adjs.length) * 1.6), color: C.adj });
+  text(base, v.x, top - 16, { size: base.length > 14 ? 10 : 12, color: h.legend ? C.legend : C.text });
   const bw = 64;
   rr(v.x - bw / 2, top - 6, bw, 7, 4); ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fill();
   rr(v.x - bw / 2, top - 6, bw * (h.hp / h.maxHp), 7, 4); ctx.fillStyle = h.hp / h.maxHp > 0.35 ? C.item : C.boss; ctx.fill();
@@ -581,13 +607,12 @@ function drawLog() {
   const g = ctx.createLinearGradient(0, H - 80, 0, H);
   g.addColorStop(0, "rgba(8,6,22,0)"); g.addColorStop(1, "rgba(8,6,22,0.9)");
   ctx.fillStyle = g; ctx.fillRect(0, H - 80, W, 80);
-  const lines = battle.logs.slice(-3);
+  const lines = battle.logs.slice(-2);
   lines.forEach((l, i) => {
     ctx.globalAlpha = 0.45 + 0.55 * ((i + 1) / lines.length);
     text(l.text, 24, H - 62 + i * 21 + (3 - lines.length) * 21, { size: 14, align: "left", weight: "500", color: C[l.kind] || C.text });
   });
   ctx.globalAlpha = 1;
-  text("hold SPACE: fast-forward   R: whack() again", W - 20, H - 18, { size: 11, align: "right", color: C.dim, weight: "500" });
 }
 
 function drawOverlay() {
@@ -630,16 +655,28 @@ function render() {
 // ---------- loop & input ----------
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000) * (fast ? 4 : 1);
+  const dt = paused ? 0 : Math.min(0.05, (now - last) / 1000) * (fast ? 4 : speed) * 0.72;
   last = now;
-  update(dt);
+  let remaining = dt;
+  while (remaining > 0) { const slice = Math.min(1 / 60, remaining); update(slice); remaining -= slice; }
   render();
   requestAnimationFrame(frame);
 }
 addEventListener("keydown", (e) => {
+  if (e.target.closest("button, input, select, dialog")) return;
   if (e.code === "Space") { fast = true; e.preventDefault(); }
   if (e.code === "KeyR" && phase !== "loading") newBattle();
 });
 addEventListener("keyup", (e) => { if (e.code === "Space") fast = false; });
+addEventListener("blur", () => { fast = false; });
+document.querySelectorAll("[data-speed]").forEach(button => button.addEventListener("click", () => {
+  speed = Number(button.dataset.speed);
+  document.querySelectorAll("[data-speed]").forEach(b => b.setAttribute("aria-pressed", String(b === button)));
+}));
+document.getElementById("restart").addEventListener("click", () => { if (phase !== "loading") newBattle(); });
+const ruleDialog = document.getElementById("rules");
+document.getElementById("show-rules").addEventListener("click", () => { paused = true; fast = false; ruleDialog.showModal(); });
+document.getElementById("close-rules").addEventListener("click", () => ruleDialog.close());
+ruleDialog.addEventListener("close", () => { paused = false; last = performance.now(); });
 newBattle();
 requestAnimationFrame(frame);

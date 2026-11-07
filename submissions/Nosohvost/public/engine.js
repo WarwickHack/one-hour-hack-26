@@ -263,7 +263,8 @@
     }
   }
 
-  const Engine = { Battle, tokenize, KIND_LABEL, BOSS_HP };
+  const HERO_KEYS = ["duck", "goose", "bug", "feature", "oculus", "compsoc", "marshall", "wace", "brevan", "howard", "bloomberg", "netcraft", "incident", "io", "prod", "segfault", "pointer", "stack", "semicolon", "demo", "prize", "wifi", "rubber duck", "marshall wace", "brevan howard", "capital one", "incident io", "null pointer"];
+  const Engine = { Battle, tokenize, KIND_LABEL, BOSS_HP, HERO_KEYS, SYNERGY, FUSIONS };
   if (typeof module !== "undefined" && module.exports) module.exports = Engine;
   else root.Engine = Engine;
 })(typeof window !== "undefined" ? window : globalThis);
