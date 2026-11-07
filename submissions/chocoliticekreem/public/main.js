@@ -168,7 +168,7 @@ function guide(c) {
 function applyToPlayer(c) {
   const e = state.effects;
   const lines = [];
-  if (c.segfault) { e.invert = Math.min(6, 2 + c.segfault); lines.push(`💥 segfault ×${c.segfault}: your controls are now inverted`); }
+  if (c.segfault) { e.invert = 2; lines.push(`💥 segfault ×${c.segfault}: your controls are now inverted`); }
   if (c.sleep) { e.slow = Math.min(6, 2 + c.sleep); lines.push(`😴 sleep ×${c.sleep}: you are so, so tired`); }
   if (c.coffee) { e.fast = Math.min(8, 3 + c.coffee); lines.push(`☕ coffee ×${c.coffee}: ZOOM`); }
   if (c.rubber) { e.shield = Math.min(10, 4 + c.rubber * 2); lines.push(`🛟 rubber ×${c.rubber}: rubber duck shield up`); }
@@ -436,25 +436,27 @@ addEventListener("keydown", (ev) => {
   keys.add(k);
 });
 addEventListener("keyup", (ev) => keys.delete(ev.key.toLowerCase()));
+addEventListener("blur", () => keys.clear());
 $("whack-btn").addEventListener("click", () => (state.phase === "play" ? selfWhack() : doWhack(false)));
 
 function movePlayer(dt) {
   const e = state.effects;
-  const dir = e.invert > 0 ? -1 : 1;
+  const flip = e.invert > 0 ? -1 : 1;
   let turn = 0;
   let fwd = 0;
   if (keys.has("a") || keys.has("arrowleft")) turn += 1;
   if (keys.has("d") || keys.has("arrowright")) turn -= 1;
   if (keys.has("w") || keys.has("arrowup")) fwd += 1;
-  if (keys.has("s") || keys.has("arrowdown")) fwd -= 1;
-  const speed = 9 * (e.fast > 0 ? 1.8 : 1) * (e.slow > 0 ? 0.35 : 1);
-  state.heading += turn * dir * 2.6 * dt;
-  const step = fwd * dir * speed * dt;
-  duck.position.x = THREE.MathUtils.clamp(duck.position.x + Math.sin(state.heading) * step, -120, 120);
-  duck.position.z = THREE.MathUtils.clamp(duck.position.z + Math.cos(state.heading) * step, -120, 120);
+  if (keys.has("s") || keys.has("arrowdown")) fwd -= 0.6;
+  const speed = 13 * (e.fast > 0 ? 1.6 : 1) * (e.slow > 0 ? 0.5 : 1);
+  state.heading += turn * flip * 3.4 * dt;
+  const step = fwd * speed * dt;
+  let x = duck.position.x + Math.sin(state.heading) * step;
+  let z = duck.position.z + Math.cos(state.heading) * step;
+  const edge = Math.hypot(x / world.lake.radiusX, z / world.lake.radiusZ) / 0.95;
+  if (edge > 1) { x /= edge; z /= edge; }
+  duck.position.set(x, world.lake.waterY + Math.sin(performance.now() / 300) * 0.06, z);
   duck.rotation.y = state.heading;
-  const inLake = world.isInLake(duck.position.x, duck.position.z);
-  duck.position.y = inLake ? world.lake.waterY + Math.sin(performance.now() / 300) * 0.06 : 0;
 }
 
 function tickEffects(dt) {
@@ -529,6 +531,9 @@ function frame() {
   pond.update(dt, t);
   updateCamera(dt);
   renderHud();
+  scene.traverse((o) => {
+    if (o.isSprite && !o.material.userData.outlineParameters) o.material.userData.outlineParameters = { visible: false };
+  });
   outline.render(scene, camera);
   requestAnimationFrame(frame);
 }

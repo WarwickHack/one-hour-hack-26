@@ -3,12 +3,12 @@ import * as THREE from "three";
 const DUCK_CAP = 80;
 const GOOSE_CAP = 30;
 const BUG_CAP = 40;
-const RUBBER_CAP = 3;
+const RUBBER_CAP = 1;
 const FOOD_CAP = 20;
 const DUCK_SCALE = 1.3;
 const GOOSE_SCALE = DUCK_SCALE * 1.5;
 const BUG_SCALE = 1.5;
-const RUBBER_SCALE = 4.5;
+const RUBBER_SCALE = 1.8;
 const FOOD_SCALE = 1.4;
 
 const G = {
