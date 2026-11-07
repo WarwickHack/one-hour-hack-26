@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Stinky CS Student</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="stage">
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="game" width="960" height="720"></canvas>
+  <div id="scanlines"></div>
+
+  <header id="hud">
+    <div class="chip"><span class="lbl">WAVE</span><span id="h-wave" class="val">1</span></div>
+    <div class="chip wide">
+      <span class="lbl">SANITY</span>
+      <div class="hpbar"><div id="h-hpfill"></div></div>
+      <span id="h-hptext" class="val">100</span>
+    </div>
+    <div class="chip"><span class="lbl">SCORE</span><span id="h-score" class="val">0</span></div>
+    <div class="chip"><span class="lbl">COMBO</span><span id="h-combo" class="val">—</span></div>
+    <div class="chip legend">
+      <span class="lg-txt warn">⚠️ SHOOT</span>
+      <span class="lg-txt heal">💚 CATCH</span>
+    </div>
+    <button id="muteBtn" class="mute" title="Toggle narrator">🔊</button>
+  </header>
+
+  <div id="narration" class="narration hidden">
+    <span class="quote">“</span><span id="narr-text"></span><span class="quote">”</span>
+    <span class="who">— THE JUDGE</span>
+  </div>
+
+  <footer id="stream">
+    <span class="tag">./whack</span>
+    <span id="h-stream" class="words"></span>
+  </footer>
+
+  <div id="overlay" class="overlay">
+    <div class="card">
+      <div class="eyebrow">A GAME WHERE THE COMPUTER TALKS BACK</div>
+      <h1>WHACK<span class="accent">26</span></h1>
+      <p class="sub">Infinite waves. One file. Zero mercy.</p>
+
+      <h3>HOW TO SURVIVE</h3>
+      <p class="goal">
+        There is no end. The file regenerates. The swarm gets faster. <br>
+        The game gets harder based on how well you play. If <b>SANITY hits 0</b>, you lose, and I describe the failure out loud.
+      </p>
+
+      <h3>WHAT TO DO</h3>
+      <ul class="legend-full">
+        <li>
+          <span class="lg-pill hostile">⚠️ ENEMY</span>
+          <div>
+            <b>SHOOT THESE.</b><br>
+            <span class="subtext">If they touch your face, you lose <span class="dmg">-5 HP</span>.</span>
+          </div>
+        </li>
+        <li>
+          <span class="lg-pill friendly">💚 FRIENDLY</span>
+          <div>
+            <b>CATCH THESE.</b><br>
+            <span class="subtext">Your blasts pass through them. Let them touch your face to heal <span class="heal">+15 HP</span>.</span>
+          </div>
+        </li>
+      </ul>
+
+      <h3>CONTROLS</h3>
+      <ul class="controls">
+        <li><b>Click anywhere</b> → fire a shockwave <em>(kills enemies only)</em></li>
+        <li><b>Shake your head</b> → free blast from your face <em>(camera)</em></li>
+      </ul>
+
+      <button id="startBtn" disabled>LOADING…</button>
+      <p id="hint" class="hint">Loading camera &amp; voice…</p>
+    </div>
+  </div>
+
+  <div id="gameover" class="overlay hidden">
+    <div class="card over">
+      <div class="eyebrow">SANITY: 0</div>
+      <h2>YOU DIED</h2>
+      <p id="go-stats" class="stats"></p>
+      <p id="go-quip" class="quip"></p>
+      <p class="hint">Press <kbd>R</kbd> to respawn</p>
+    </div>
+  </div>
+</div>
+<script type="module" src="/static/game.js"></script>
+</body>
+</html>
