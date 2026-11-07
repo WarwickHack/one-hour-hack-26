@@ -130,3 +130,40 @@ aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
   background: #ff5e4d; color: #fff; font-size: 18px; font-weight: 700; pointer-events: none; animation: nudge 1s ease-in-out infinite; }
 #nudge[hidden] { display: none; }
 @keyframes nudge { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.08); } }
+
+
+/* touch screens, portrait or landscape */
+@media (pointer: coarse) {
+  html, body, #scene { touch-action: none; -webkit-user-select: none; user-select: none; }
+  #controls, #nudge, #goal { display: none; }
+  #top { gap: 10px; padding: 6px 10px; }
+  #title { font-size: 12px; }
+  #hp { font-size: 14px; }
+  #score { font-size: 15px; }
+  #clock { font-size: 16px; margin-left: auto; }
+  #next { top: 32px; right: 8px; width: 90px; height: 12px; font-size: 8px; line-height: 12px; }
+  #file-panel { display: none; }
+  #live { top: 50px; right: 8px; width: 112px; padding-bottom: 2px; border-radius: 10px; }
+  #live .panel-head { padding: 3px 8px; font-size: 9px; }
+  .live-row { font-size: 10px; padding: 0 8px; }
+  .live-row:nth-child(n+5) { display: none; }
+  #banner { gap: 6px; }
+  #banner h1 { font-size: 30px; }
+  #banner .sub { font-size: 12px; max-width: 300px; }
+  #name { font-size: 15px !important; padding: 6px 10px !important; }
+  .side { padding: 6px 10px; gap: 6px; border-radius: 10px; }
+  .side-left { left: 10px; }
+  .side-right { display: none; }
+  .board { min-width: 0; }
+  .board h3 { font-size: 9px; margin-bottom: 2px; }
+  .board ol { font-size: 11px; padding-left: 14px; }
+  .board li:nth-child(n+4) { display: none; }
+  #toasts { top: 40px; }
+  #toasts div { font-size: 12px; padding: 3px 10px; }
+  #toasts div.warn { font-size: 13px; }
+  #outcome { font-size: 13px; bottom: 20px; padding: 5px 12px; }
+  #effects { bottom: 48px; font-size: 11px; }
+}
+@media (pointer: coarse) and (max-width: 700px) {
+  .side { position: static; transform: none; flex-direction: row; }
+}

@@ -1,5 +1,14 @@
 (function () {
   if (!('ontouchstart' in window) && !navigator.maxTouchPoints) return;
+  ['dblclick', 'gesturestart', 'gesturechange'].forEach(function (type) {
+    document.addEventListener(type, function (e) { e.preventDefault(); }, { passive: false });
+  });
+  var lastTouchEnd = 0;
+  document.addEventListener('touchend', function (e) {
+    var now = Date.now();
+    if (now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
 
   function send(type, key) {
     window.dispatchEvent(new KeyboardEvent(type, { key: key, bubbles: true }));
@@ -97,11 +106,18 @@
     });
   });
 
-  whack.addEventListener('pointerdown', function (ev) {
+  var lastWhack = 0;
+  function fireWhack(ev) {
     ev.preventDefault();
+    ev.stopPropagation();
+    var now = Date.now();
+    if (now - lastWhack < 250) return;
+    lastWhack = now;
     send('keydown', ' ');
     send('keyup', ' ');
-  });
+  }
+  whack.addEventListener('touchstart', fireWhack, { passive: false });
+  whack.addEventListener('pointerdown', fireWhack);
 
   play.addEventListener('pointerdown', function (ev) {
     ev.preventDefault();
