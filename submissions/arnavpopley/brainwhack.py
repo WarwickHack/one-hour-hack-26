@@ -399,7 +399,7 @@ def dashboard(ev, note=""):
 
 
 def save(ev):
-    name = "bred_" + re.sub(r"[^A-Za-z0-9]", "_", ev["target_text"]) + ".wl"
+    name = "bred_" + re.sub(r"[^A-Za-z0-9]", "_", ev["target_text"]) + ".bw"
     with open(name, "w", encoding="utf-8") as f:
         f.write(f"# BrainWhack program bred to print {ev['target_text']!r}\n")
         f.write(f"# {ev['gen']:,} generations, {ev['calls']:,} calls to whack() ({ev['genes']:,} genes, "
@@ -498,7 +498,7 @@ def main():
         return
     if cmd in ("run", "trace") and (len(args) < 2 or not os.path.exists(args[1])):
         missing = f"No file called {args[1]!r}. " if len(args) > 1 else ""
-        print(f"{missing}Usage: python3 brainwhack.py {cmd} FILE   (try: python3 brainwhack.py {cmd} bred_HONK.wl)")
+        print(f"{missing}Usage: python3 brainwhack.py {cmd} FILE   (try: python3 brainwhack.py {cmd} bred_HONK.bw)")
         return
     if cmd == "ops":
         for fam, ws in FAMILIES.items():

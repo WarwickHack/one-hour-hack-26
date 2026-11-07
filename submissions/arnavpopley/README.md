@@ -10,9 +10,9 @@ Python 3.9 or newer, standard library only.
 
 ```
 cd submissions/arnavpopley
-python3 brainwhack.py evolve HONK       # breed a program that prints HONK, saved as bred_HONK.wl
-python3 brainwhack.py run bred_HONK.wl  # run any program file
-python3 brainwhack.py trace bred_HONK.wl  # step through it one word at a time, with the stack
+python3 brainwhack.py evolve HONK       # breed a program that prints HONK, saved as bred_HONK.bw
+python3 brainwhack.py run bred_HONK.bw  # run any program file
+python3 brainwhack.py trace bred_HONK.bw  # step through it one word at a time, with the stack
 python3 brainwhack.py census           # run 1,000 wild whack() programs: most of them crash
 python3 whack_lab.py                   # the lab, then open http://localhost:8026/?breed=HONK
 ```
@@ -22,6 +22,14 @@ python3 whack_lab.py                   # the lab, then open http://localhost:802
 ![The lab after breeding HONK](screenshot.png)
 
 ![The lab breeding HONK live](demo.gif)
+
+## What it is
+
+BrainWhack is an esoteric programming language in the Brainfuck tradition, except that the 8 symbols are replaced by the 42 words whack() knows. Each word is 1 instruction for a small stack machine that works on bytes, so `capital` pushes 65, `coffee` adds 1, `honk` prints the top of the stack as a letter, and `duck … goose` is a loop. Some of the sponsors are no-ops. Since every word means something, there is no such thing as a syntax error, and hence every file whack() has ever written is a runnable program. Most of them loop forever, print garbage, or segfault, and `census` runs 1,000 of them so you can watch the same.
+
+The breeder gets around this by evolution rather than by writing the program. whack() is the only source of randomness in the whole project, and `brainwhack.py` never imports `random`. It writes the starting population of 40 programs, supplies every new word a mutation adds, and makes every dice roll by reading its own output as digits in base 42. Programs are scored on how close their output is to the target, the fittest 10 of 40 survive each generation, and the lab shows the gene pool converging live in the browser.
+
+The target is HONK because the first program in a goose language should be Hello World for geese, and because anyone who has crossed Warwick’s campus knows who actually runs it. The bred program in `bred_HONK.bw` honks twice for H and O, then prints N and K in one go with `deploy`, which ships the whole stack.
 
 ## The 42 words
 

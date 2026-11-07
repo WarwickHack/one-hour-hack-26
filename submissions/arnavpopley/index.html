@@ -188,9 +188,11 @@ function fit(canvas) {
 
 // ---- the whack() feed: every word that falls came from a real call
 const drops = [];
+let dropCount = 0;
 function spawn(words, n) {
   for (let i = 0; i < n && words && words.length; i++) {
-    drops.push({ w: words[(i * 7 + drops.length) % words.length], x: Math.random(), y: -4 - Math.random() * 30, v: 0.8 + Math.random() * 0.9 });
+    const k = ++dropCount;  // golden-ratio spacing, so the page itself uses no randomness
+    drops.push({ w: words[(i * 7 + drops.length) % words.length], x: (k * 0.6180339887) % 1, y: -4 - ((k * 0.7548776662) % 1) * 30, v: 0.8 + ((k * 0.5698402910) % 1) * 0.9 });
   }
   if (drops.length > 70) drops.splice(0, drops.length - 70);
 }
@@ -384,7 +386,7 @@ async function finale(ev, my) {
   $("tapeTitle").textContent = `pruned to the ${ev.program.length} words that matter (from ${ev.before.length}) · running it`;
   status(`Running the bred program. Every printing word adds a letter.`);
   await execute(ev.program, ev.trace, ev.ending, S.target, my, ev.steps);
-  if (my === token) status(`<b>${ev.target_text}</b>, bred from ${fmt(ev.calls)} calls to whack(): ${fmt(ev.genes)} for genes and ${fmt(ev.dice)} for dice. Saved as bred_${ev.target_text.replace(/[^A-Za-z0-9]/g, "_")}.wl`);
+  if (my === token) status(`<b>${ev.target_text}</b>, bred from ${fmt(ev.calls)} calls to whack(): ${fmt(ev.genes)} for genes and ${fmt(ev.dice)} for dice. Saved as bred_${ev.target_text.replace(/[^A-Za-z0-9]/g, "_")}.bw`);
 }
 
 async function execute(prog, trace, ending, target, my, steps) {
