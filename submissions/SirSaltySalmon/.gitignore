@@ -1,0 +1,3 @@
+# ViZDoom writes its config wherever it runs
+_vizdoom.ini
+_vizdoom/
