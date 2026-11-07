@@ -1,8 +1,8 @@
 # Grammar vs The Deadline
 
-**By: Nosohvost · WarwickHack / WHACK 26 One Hour Hack · Prototype 03**
+**By: Savva — third-year Discrete Maths student at the University of Warwick.**
 
-**Pitch:** `whack()` writes the battle script: nouns march in as heroes, adjectives mutate them, and verbs launch attacks at a furious deadline clock. Can a randomly generated sentence ship before midnight?
+**Pitch:** An epic adventure where words become heroes and battle the Deadline.
 
 A duck can quack, a production server can deploy, and a **MIDNIGHT RUBBER GOOSE** can honk twice with double power. Sponsor names fuse into legendary recruits; `stack overflow` drops actual stack frames onto the boss. Sometimes the function returns barely enough words to assemble an army. That is part of the joke.
 
