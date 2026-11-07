@@ -47,17 +47,25 @@ addEventListener("resize", () => {
 
 function buildPlayerDuck(bodyColor = 0xfaf7ef) {
   const g = new THREE.Group();
-  const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 20, 14), mat(bodyColor));
-  body.scale.set(1, 0.75, 1.35);
-  body.position.y = 0.45;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 12), mat(0x1f7a4a));
-  head.position.set(0, 1.15, 0.75);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.45, 10), mat(0xff9a2e));
-  beak.rotation.x = Math.PI / 2;
-  beak.position.set(0, 1.08, 1.2);
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.55, 12), mat(0xff3b6b));
-  hat.position.set(0, 1.75, 0.72);
+  const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.55 });
+  const part = (geo, color, [x, y, z], [sx, sy, sz] = [1, 1, 1]) => {
+    const m = new THREE.Mesh(geo, mat(color));
+    m.position.set(x, y, z);
+    m.scale.set(sx, sy, sz);
+    return m;
+  };
+  const sphere = new THREE.SphereGeometry(1, 24, 16);
+  const body = part(sphere, bodyColor, [0, 0.5, 0], [0.85, 0.62, 1.15]);
+  const tail = part(new THREE.ConeGeometry(0.35, 0.7, 12), bodyColor, [0, 0.8, -1.05]);
+  tail.rotation.x = -Math.PI / 3;
+  const wingL = part(sphere, bodyColor, [-0.72, 0.62, -0.1], [0.22, 0.4, 0.75]);
+  const wingR = part(sphere, bodyColor, [0.72, 0.62, -0.1], [0.22, 0.4, 0.75]);
+  const head = part(sphere, bodyColor, [0, 1.35, 0.7], [0.48, 0.48, 0.48]);
+  const beak = part(sphere, 0xff9a2e, [0, 1.28, 1.2], [0.2, 0.09, 0.3]);
+  const eyeL = part(sphere, 0x111111, [-0.22, 1.45, 1.05], [0.07, 0.07, 0.07]);
+  const eyeR = part(sphere, 0x111111, [0.22, 1.45, 1.05], [0.07, 0.07, 0.07]);
+  const scarf = part(new THREE.TorusGeometry(0.42, 0.1, 8, 24), 0x5b2c83, [0, 1.0, 0.62]);
+  scarf.rotation.x = Math.PI / 2.4;
   const shield = new THREE.Mesh(
     new THREE.TorusGeometry(1.5, 0.08, 8, 40),
     new THREE.MeshBasicMaterial({ color: 0xffd000 }),
@@ -65,13 +73,14 @@ function buildPlayerDuck(bodyColor = 0xfaf7ef) {
   shield.rotation.x = Math.PI / 2;
   shield.position.y = 0.1;
   shield.visible = false;
-  [body, head, beak, hat].forEach((m) => { m.castShadow = true; g.add(m); });
+  [body, tail, wingL, wingR, head, beak, eyeL, eyeR, scarf].forEach((m) => { m.castShadow = true; g.add(m); });
   g.add(shield);
   g.userData = { shield, head };
   return g;
 }
 
-const duck = buildPlayerDuck();
+const duck = buildPlayerDuck(0xfff4cf);
+duck.scale.setScalar(1.2);
 duck.position.set(0, world.lake.waterY, world.lake.radiusZ * 0.5);
 scene.add(duck);
 
@@ -372,12 +381,13 @@ async function showMenu() {
   const b = $("banner");
   b.hidden = false;
   b.innerHTML = `
-    <h1>LAKE QUACKULUS</h1>
+    <h1>LAKE WOXBRIDGE</h1>
     <p class="sub">Every few seconds <b>whack()</b> throws random chaos at you. Survive till midnight.</p>
     <input id="name" maxlength="16" placeholder="duck name" style="font:inherit;padding:10px 14px;border-radius:8px;border:0;text-align:center">
     <p class="sub"><span class="key">WASD</span> swim · <span class="key">SPACE</span> whack another duck · <span class="key">ENTER</span> play</p>
     ${await leaderboardHtml()}`;
   const input = $("name");
+  try { state.name = state.name || localStorage.getItem("duckName") || ""; } catch {}
   input.value = state.name;
   input.focus();
 }
@@ -391,6 +401,7 @@ function start() {
   duck.visible = true;
   state.camMode = "third";
   net.rename(state.name);
+  try { localStorage.setItem("duckName", state.name); } catch {}
   $("banner").hidden = true;
   $("toasts").innerHTML = "";
   state.nextAuto = performance.now() + 1500;
@@ -439,8 +450,8 @@ function movePlayer(dt) {
   const speed = 9 * (e.fast > 0 ? 1.8 : 1) * (e.slow > 0 ? 0.35 : 1);
   state.heading += turn * dir * 2.6 * dt;
   const step = fwd * dir * speed * dt;
-  duck.position.x = THREE.MathUtils.clamp(duck.position.x + Math.sin(state.heading) * step, -85, 85);
-  duck.position.z = THREE.MathUtils.clamp(duck.position.z + Math.cos(state.heading) * step, -85, 85);
+  duck.position.x = THREE.MathUtils.clamp(duck.position.x + Math.sin(state.heading) * step, -120, 120);
+  duck.position.z = THREE.MathUtils.clamp(duck.position.z + Math.cos(state.heading) * step, -120, 120);
   duck.rotation.y = state.heading;
   const inLake = world.isInLake(duck.position.x, duck.position.z);
   duck.position.y = inLake ? world.lake.waterY + Math.sin(performance.now() / 300) * 0.06 : 0;

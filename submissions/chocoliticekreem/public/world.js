@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
-const LAKE_RX = 35;
-const LAKE_RZ = 23;
+const LAKE_RX = 52;
+const LAKE_RZ = 35;
 const WATER_Y = 0.05;
 const CAMERA_FACE = new THREE.Vector3(0, 0, 60);
 
@@ -162,7 +162,7 @@ export function buildWorld(scene) {
   sun.target.position.set(0, 0, -10);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -100, right: 100, top: 100, bottom: -100, near: 1, far: 320 });
+  Object.assign(sun.shadow.camera, { left: -115, right: 115, top: 115, bottom: -115, near: 1, far: 360 });
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0005;
   sun.shadow.normalBias = 0.03;
@@ -189,7 +189,7 @@ export function buildWorld(scene) {
   const hillGeo = new THREE.IcosahedronGeometry(1, 1);
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2 + Math.random() * 0.3;
-    const r = 140 + Math.random() * 40;
+    const r = 190 + Math.random() * 40;
     const hill = new THREE.Mesh(hillGeo, std(i % 2 ? "#5d8a40" : "#557f3c"));
     hill.position.set(Math.cos(a) * r, -4, Math.sin(a) * r);
     hill.scale.set(30 + Math.random() * 20, 10 + Math.random() * 10, 30 + Math.random() * 20);
@@ -237,7 +237,7 @@ export function buildWorld(scene) {
   let nc = 0;
   let nb = 0;
   for (let c = 0; c < 90; c++) {
-    const [cx, cz] = ringPoint(98, 420);
+    const [cx, cz] = ringPoint(150, 420);
     const n = 6 + Math.floor(Math.random() * 10);
     for (let k = 0; k < n; k++) {
       const x = cx + (Math.random() - 0.5) * 30;
@@ -279,7 +279,7 @@ export function buildWorld(scene) {
   const roofMat = std("#6f6a64");
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.25;
-    const r = 115 + Math.random() * 180;
+    const r = 160 + Math.random() * 160;
     const w = 14 + Math.random() * 18;
     const h = 8 + Math.random() * (i % 5 === 0 ? 26 : 12);
     const d = 10 + Math.random() * 12;
@@ -356,10 +356,20 @@ export function buildWorld(scene) {
     m.receiveShadow = true;
     scene.add(m);
   }
+  const pathSegs = [];
   function pathToRing(x, z) {
     const a = Math.atan2(z / LAKE_RZ, x / LAKE_RX);
-    pathStrip(Math.cos(a) * LAKE_RX * 1.26, Math.sin(a) * LAKE_RZ * 1.26, x, z);
+    const x1 = Math.cos(a) * LAKE_RX * 1.26;
+    const z1 = Math.sin(a) * LAKE_RZ * 1.26;
+    pathSegs.push([x1, z1, x, z]);
+    pathStrip(x1, z1, x, z);
   }
+  const nearPath = (x, z, pad) => pathSegs.some(([x1, z1, x2, z2]) => {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const t = Math.max(0, Math.min(1, ((x - x1) * dx + (z - z1) * dz) / (dx * dx + dz * dz)));
+    return Math.hypot(x - (x1 + dx * t), z - (z1 + dz * t)) < pad;
+  });
 
   // ---------- landmarks ----------
   const avoid = [];
@@ -383,7 +393,7 @@ export function buildWorld(scene) {
   // Library
   {
     const g = new THREE.Group();
-    g.position.set(-20, 0, -56);
+    g.position.set(-30, 0, -84);
     const label = addLabel(g, "Library", 32);
     const t = addTarget(["library"], label);
     const tower = windowBox(t, 12, 26, 12, 6, 13, "#d9d2c4", "#2d3b55", "#6f6a66");
@@ -402,7 +412,7 @@ export function buildWorld(scene) {
   // The Oculus
   {
     const g = new THREE.Group();
-    g.position.set(33, 0, -44);
+    g.position.set(50, 0, -66);
     const label = addLabel(g, "The Oculus", 15);
     const t = addTarget(["oculus"], label);
     const glass = glowMat(t, new THREE.MeshStandardMaterial({
@@ -429,7 +439,7 @@ export function buildWorld(scene) {
   // Warwick Arts Centre
   {
     const g = new THREE.Group();
-    g.position.set(-57, 0, -24);
+    g.position.set(-86, 0, -36);
     const label = addLabel(g, "Warwick Arts Centre", 18);
     const t = addTarget(["warwick"], label);
     const body = windowBox(t, 26, 7, 14, 13, 3, "#9a6a50", "#2b2f45", "#4a3f55");
@@ -460,7 +470,7 @@ export function buildWorld(scene) {
   // CS building (CompSoc)
   {
     const g = new THREE.Group();
-    g.position.set(56, 0, -14);
+    g.position.set(84, 0, -21);
     const label = addLabel(g, "CS Building (CompSoc)", 17);
     const t = addTarget(["compsoc"], label);
     const body = windowBox(t, 14, 11, 12, 7, 5, "#b9c2c9", "#24304a", "#555c63");
@@ -488,7 +498,7 @@ export function buildWorld(scene) {
   }
 
   // Piazza / Rootes
-  const piazza = new THREE.Vector3(8, 0.1, -36);
+  const piazza = new THREE.Vector3(12, 0.1, -54);
   {
     const g = new THREE.Group();
     g.position.set(piazza.x, 0, piazza.z);
@@ -536,12 +546,12 @@ export function buildWorld(scene) {
 
   // ---------- sponsor billboards ----------
   const sponsors = [
-    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-46, 7], bg: "#0f2a4a", fg: "#ffffff" },
-    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-44, -17], bg: "#161616", fg: "#d8b45a" },
-    { name: "Capital One", keys: ["capital", "one"], pos: [46, 7], bg: "#004977", fg: "#ffffff" },
-    { name: "Bloomberg", keys: ["bloomberg"], pos: [46, -19], bg: "#000000", fg: "#ff9a1a" },
-    { name: "Netcraft", keys: ["netcraft"], pos: [-30, 29], bg: "#1d3c6e", fg: "#ffffff" },
-    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [30, 29], bg: "#f25533", fg: "#ffffff" },
+    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-69, 10.5], bg: "#0f2a4a", fg: "#ffffff" },
+    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-66, -25.5], bg: "#161616", fg: "#d8b45a" },
+    { name: "Capital One", keys: ["capital", "one"], pos: [69, 10.5], bg: "#004977", fg: "#ffffff" },
+    { name: "Bloomberg", keys: ["bloomberg"], pos: [69, -28.5], bg: "#000000", fg: "#ff9a1a" },
+    { name: "Netcraft", keys: ["netcraft"], pos: [-45, 43.5], bg: "#1d3c6e", fg: "#ffffff" },
+    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [45, 43.5], bg: "#f25533", fg: "#ffffff" },
   ];
   const postGeo = new THREE.CylinderGeometry(0.15, 0.18, 5.2, 6);
   const postMat = std("#3a3a40");
@@ -612,10 +622,10 @@ export function buildWorld(scene) {
   // ---------- trees ----------
   const treeSpots = [];
   for (let tries = 0; treeSpots.length < 80 && tries < 2000; tries++) {
-    const x = (Math.random() * 2 - 1) * 88;
-    const z = (Math.random() * 2 - 1) * 88;
+    const x = (Math.random() * 2 - 1) * 125;
+    const z = (Math.random() * 2 - 1) * 125;
     const f = Math.sqrt((x / LAKE_RX) ** 2 + (z / LAKE_RZ) ** 2);
-    if (f < 1.6 || nearAvoid(x, z, 3)) continue;
+    if (f < 1.6 || nearAvoid(x, z, 3) || nearPath(x, z, 3)) continue;
     if (treeSpots.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 4.5)) continue;
     treeSpots.push([x, z, 0.8 + Math.random() * 0.7, Math.random() < 0.5]);
   }

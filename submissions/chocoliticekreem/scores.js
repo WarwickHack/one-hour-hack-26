@@ -14,12 +14,22 @@ function clean(body) {
   };
 }
 
+function bestPerName(rows) {
+  const seen = new Set();
+  return rows.filter((r) => {
+    const key = r.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 20);
+}
+
 async function top() {
-  if (!URL) return [...memory].sort((a, b) => b.score - a.score).slice(0, 20);
-  const res = await fetch(`${URL}/rest/v1/whack_scores?select=name,score,survived,died_to,whacks,created_at&order=score.desc&limit=20`, {
+  if (!URL) return bestPerName([...memory].sort((a, b) => b.score - a.score));
+  const res = await fetch(`${URL}/rest/v1/whack_scores?select=name,score,survived,died_to,whacks,created_at&order=score.desc&limit=500`, {
     headers: { apikey: KEY, Authorization: `Bearer ${KEY}` },
   });
-  return res.ok ? res.json() : [];
+  return res.ok ? bestPerName(await res.json()) : [];
 }
 
 async function submit(body) {
