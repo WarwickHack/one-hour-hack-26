@@ -18,6 +18,8 @@ Then open http://localhost:3026. There are no dependencies, just Node 18+ and a 
 
 ## Screenshot
 
+![gameplay](gameplay.gif)
+
 ![screenshot](screenshot.png)
 
 ## How whack() runs the game
