@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#17162b">
+    <title>WHACK a mole</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/game.js" defer></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="WHACK a mole home">
+          <span class="brand-mark" aria-hidden="true">WH</span>
+          <span>WHACK <span class="brand-light">a mole</span></span>
+        </a>
+        <span class="edition"><span class="live-light"></span> WHACK 26 ARCADE</span>
+      </header>
+
+      <div class="cabinet">
+        <section class="intro" aria-labelledby="game-title">
+          <div class="intro-copy">
+            <p class="eyebrow">INSERT COIN</p>
+            <h1 id="game-title">WHACK <span>a mole</span></h1>
+          </div>
+          <div class="scoreboard" aria-label="Round stats">
+            <div class="stat"><span class="stat-label">SCORE</span><strong id="score">000</strong></div>
+            <div class="stat"><span class="stat-label">STREAK</span><strong id="streak">0×</strong></div>
+            <div class="stat timer-stat"><span class="stat-label">TIME</span><strong id="time">30</strong></div>
+          </div>
+        </section>
+
+        <section class="arcade" aria-label="Whac-a-mole arcade machine">
+          <div class="board-heading">
+            <p id="status" role="status" aria-live="polite">READY PLAYER ONE</p>
+            <button id="start" class="start-button" type="button">START GAME <span aria-hidden="true">▶</span></button>
+          </div>
+
+          <div class="screen-frame">
+            <div class="screen-content">
+              <div class="board" aria-label="Mole holes">
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+                <button class="hole" type="button" aria-label="Empty hole"><span class="dirt dirt-back"></span><img class="mole-image" alt="" draggable="false"><span class="dirt dirt-front"></span></button>
+              </div>
+              <aside class="word-monitor" aria-label="Words as moles appear">
+                <p class="monitor-heading">WORD LOG <span>LIVE</span></p>
+                <ol id="word-log" aria-live="polite">
+                  <li class="log-empty">AWAITING INPUT...</li>
+                </ol>
+              </aside>
+            </div>
+          </div>
+
+          <div class="control-deck" aria-hidden="true">
+            <div class="joystick"><span></span><i></i></div>
+            <div class="deck-label">WHACK-O-MATIC <span>•</span> 1P</div>
+            <div class="control-buttons"><i></i><i></i><i></i></div>
+          </div>
+          <div class="cast-bar">
+            <span class="cast-title">WORD CAST</span>
+            <div id="cast" class="cast-list" aria-live="polite">
+              <span class="cast-empty">Insert a coin to summon the cast…</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer><span>WHACK-O-MATIC 3000</span><span>ONE PLAYER <b>•</b> ENDLESS HONK</span></footer>
+    </main>
+  </body>
+</html>
