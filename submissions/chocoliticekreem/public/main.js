@@ -10,8 +10,11 @@ const AUTO_WHACK_MS = 4000;
 const SELF_WHACK_COOLDOWN_MS = 10000;
 const POS_SEND_MS = 250;
 const BUFFS = new Set(["coffee", "rubber", "null", "pizza"]);
-const MINUTES_PER_TICK = 2;
 const DEADLINE = 90;
+const ROUND_MS = 180000;
+const currentRound = () => Math.floor(Date.now() / ROUND_MS);
+const roundFrac = () => (Date.now() % ROUND_MS) / ROUND_MS;
+let boardView = "current";
 const MAX_HP = 5;
 const BAD = new Set(["goose", "honk", "prod", "segfault", "null", "pointer", "overflow", "conflict", "sleep", "bug"]);
 const GOOD = new Set(["duck", "coffee", "pizza", "rubber", "feature", "prize", "deploy", "merge"]);
@@ -106,7 +109,7 @@ const state = {
   camMode: "third",
   effects: { invert: 0, slow: 0, fast: 0, shield: 0, hidden: 0, invuln: 0, quant: 0 },
   diedTo: null,
-  lastSelfWhack: 0,
+  lastSelfWhack: -Infinity,
   nextAuto: 0,
 };
 pond.player = { position: duck.position, hidden: false, shield: false };
@@ -141,15 +144,37 @@ function log(lines, cls) {
   while (box.children.length > 3) box.firstChild.remove();
 }
 
-function showFile(file, words) {
-  const lines = file.trimEnd().split("\n");
-  $("file-meta").textContent = `· ${words.length} words`;
-  $("file").innerHTML = lines
-    .map((w, i) => {
-      const cls = BAD.has(w) ? "hot" : GOOD.has(w) ? "good" : "";
-      return `<span class="ln">${i + 1}</span><span class="${cls}">${w}</span>`;
-    })
-    .join("\n");
+const ICONS = {
+  goose: "🪿", honk: "📢", prod: "☄️", segfault: "💥", null: "👻", pointer: "👉", sleep: "😴", bug: "🐛",
+  overflow: "🗼", conflict: "⚔️", duck: "🦆", coffee: "☕", pizza: "🍕", rubber: "🛟", feature: "✨", prize: "🏆",
+  deploy: "🚀", merge: "🔀",
+};
+
+function playerColor(name) {
+  let h = 0;
+  for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${h}, 85%, 62%)`;
+}
+
+function shortName(name) {
+  const n = String(name);
+  return n.length > 8 ? `${n.slice(0, 8)}…` : n;
+}
+
+function showFile(file, words, from) {
+  const c = countWords(file.trimEnd().split("\n"));
+  const chips = Object.entries(c)
+    .filter(([w]) => ICONS[w])
+    .sort((a, b) => (BAD.has(b[0]) - BAD.has(a[0])) || b[1] - a[1])
+    .slice(0, 9)
+    .map(([w, n]) => `<span class="chip ${BAD.has(w) ? "hot" : "good"}">${ICONS[w]}×${n}</span>`)
+    .join("");
+  const panel = $("file-panel");
+  panel.style.borderColor = from ? playerColor(from) : "transparent";
+  $("file-head").innerHTML = from
+    ? `<span class="dot" style="background:${playerColor(from)}"></span>${escapeHtml(shortName(from))}'s whack() · ${words.length}`
+    : `whack() · ${words.length}`;
+  $("file").innerHTML = chips;
 }
 
 function flash(color = "#ff3b2f") {
@@ -194,7 +219,6 @@ function applyToPlayer(c) {
     fired.add(ability);
     try { lines.push(ability(abilityCtx, n)); } catch (err) { console.warn("ability", word, err); }
   }
-  if (c.midnight) { state.minutes += c.midnight; lines.push(`🌙 midnight ×${c.midnight}: time flies (+${c.midnight} min)`); }
   return lines;
 }
 
@@ -212,7 +236,6 @@ async function doWhack(self) {
   const c = countWords(words);
   if (state.phase === "play") {
     if (!self) addPoints(10);
-    if (!self) state.minutes += MINUTES_PER_TICK;
   }
   let header = `⏰ whack() #${state.whacks} · ${words.length} words · ${clockText()}`;
   let pondLines;
@@ -241,13 +264,13 @@ async function doWhack(self) {
 
 function onWhacked({ from, words }) {
   if (state.phase !== "play") return;
-  showFile(words.join("\n") + "\n", words);
+  showFile(words.join("\n") + "\n", words, from);
   const pondLines = pond.applyWhack(words) || [];
   const playerLines = applyToPlayer(countWords(words));
   log([...pondLines].reverse());
   log([...playerLines].reverse(), "you");
-  log([`🎯 ${from} whacked you`], "you");
-  flash("#b04bff");
+  toast("🎯 " + shortName(from) + " whacked you", "warn");
+  flash(playerColor(from));
 }
 
 const drops = [];
@@ -342,10 +365,10 @@ function nameTag(text) {
   const ctx = c.getContext("2d");
   ctx.fillStyle = "rgba(11,16,48,.75)";
   ctx.fillRect(0, 8, 256, 48);
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = playerColor(text);
   ctx.font = "bold 30px monospace";
   ctx.textAlign = "center";
-  ctx.fillText(String(text).slice(0, 16), 128, 43);
+  ctx.fillText(shortName(text), 128, 43);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
   s.scale.set(4, 1, 1);
   s.position.y = 2.6;
@@ -393,17 +416,29 @@ function selfWhack() {
   doWhack(true);
 }
 
-async function leaderboardHtml() {
+function boardList(title, rows, crown) {
+  const items = rows.length
+    ? rows.map((r, i) => `<li>${crown && i === 0 ? "👑 " : ""}<b>${escapeHtml(r.name)}</b> ${r.score}</li>`).join("")
+    : "<li>no ducks yet</li>";
+  return `<div class="board"><h3>${title}</h3><ol>${items}</ol></div>`;
+}
+
+async function fetchBoards() {
   try {
-    const rows = await (await fetch("/api/scores")).json();
-    if (!rows.length) return "";
-    return `<ol class="sub" style="text-align:left">${rows
-      .slice(0, 10)
-      .map((r) => `<li><b>${escapeHtml(r.name)}</b> ${r.score}${r.survived ? " 🏆" : ""}</li>`)
-      .join("")}</ol>`;
+    return await (await fetch("/api/scores")).json();
   } catch {
-    return "";
+    return { current: [], last: [], allTime: [] };
   }
+}
+
+async function leaderboardHtml(mode = "menu") {
+  const b = await fetchBoards();
+  if (mode === "menu") {
+    return `<div class="boards">${boardList("This round", b.current || [])}${boardList("Last round", b.last || [], true)}${boardList("All time", b.allTime || [])}</div>`;
+  }
+  return boardView === "last"
+    ? `${boardList("Last round", b.last || [], true)}<p class="sub"><span class="key">L</span> this round</p>`
+    : `${boardList("This round", b.current || [])}<p class="sub"><span class="key">L</span> last round</p>`;
 }
 
 function escapeHtml(s) {
@@ -427,7 +462,7 @@ async function showMenu() {
 
 function start() {
   state.name = ($("name")?.value || "anon duck").trim().slice(0, 16) || "anon duck";
-  Object.assign(state, { phase: "play", hp: MAX_HP, score: 0, whacks: 0, minutes: 0, diedTo: null });
+  Object.assign(state, { phase: "play", hp: MAX_HP, score: 0, whacks: 0, diedTo: null, round: currentRound(), startedAt: Date.now() });
   Object.keys(state.effects).forEach((k) => (state.effects[k] = 0));
   duck.position.copy(world.randomLakePoint());
   state.heading = Math.random() * Math.PI * 2;
@@ -453,8 +488,8 @@ async function end(survived, diedTo) {
   b.innerHTML = `
     <h1>${survived ? "SURVIVED 🏆" : "QUACKED"}</h1>
     <p class="sub">${survived ? "" : `${escapeHtml(diedTo)} got you · `}<b>${state.score}</b></p>
-    ${await leaderboardHtml()}
-    <p><span class="key">ENTER</span> again</p>`;
+    <div id="end-board">${await leaderboardHtml("end")}</div>
+    <p><span class="key">ENTER</span> next round</p>`;
 }
 
 addEventListener("keydown", (ev) => {
@@ -465,6 +500,11 @@ addEventListener("keydown", (ev) => {
     return;
   }
   if (ev.target.tagName === "INPUT") return;
+  if (k === "l" && state.phase !== "play" && state.phase !== "menu") {
+    boardView = boardView === "last" ? "current" : "last";
+    leaderboardHtml("end").then((html) => { const el = $("end-board"); if (el) el.innerHTML = html; });
+    return;
+  }
   if (k === " ") { ev.preventDefault(); selfWhack(); return; }
   keys.add(k);
 });
@@ -477,8 +517,8 @@ function movePlayer(dt) {
   const flip = 1;
   let turn = 0;
   let fwd = 0;
-  if (keys.has("a") || keys.has("arrowleft")) turn -= 1;
-  if (keys.has("d") || keys.has("arrowright")) turn += 1;
+  if (keys.has("a") || keys.has("arrowleft")) turn += 1;
+  if (keys.has("d") || keys.has("arrowright")) turn -= 1;
   if (keys.has("w") || keys.has("arrowup")) fwd += 1;
   if (keys.has("s") || keys.has("arrowdown")) fwd -= 0.6;
   const speed = 13 * (e.fast > 0 ? 1.6 : 1) * (e.slow > 0 ? 0.5 : 1);
@@ -559,9 +599,13 @@ function frame() {
   }
   if (state.phase === "play") {
     movePlayer(dt);
-    if (state.minutes >= DEADLINE) { addPoints(500); end(true, null); }
+    if (currentRound() !== state.round) {
+      addPoints(Math.round(500 * Math.min(1, (Date.now() - state.startedAt) / ROUND_MS)));
+      end(true, null);
+    }
   }
   tickEffects(dt);
+  state.minutes = Math.floor(roundFrac() * DEADLINE);
   world.setNight(0);
   world.update(dt, t);
   pond.update(dt, t);

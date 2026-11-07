@@ -57,3 +57,13 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 #toasts div.warn { color: #fff; background: #c2253ad0; font-size: 20px; }
 #whack-btn { white-space: nowrap; }
 .hint { white-space: nowrap; }
+.boards { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+.board { min-width: 150px; text-align: left; }
+.board h3 { font-size: 14px; color: #7ee0c3; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.board ol { padding-left: 20px; font-size: 15px; }
+#file-panel { width: 190px; border: 2px solid transparent; max-height: none; }
+#file { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 10px 10px; }
+.chip { font-size: 15px; font-weight: 800; padding: 3px 8px; border-radius: 999px; background: #ffffff14; }
+.chip.hot { color: #ff7b6b; background: #ff3b2f22; }
+.chip.good { color: #7ee0c3; background: #2fd09a1c; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
