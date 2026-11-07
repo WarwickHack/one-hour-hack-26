@@ -4,7 +4,6 @@ import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
 import { buildWorld } from "./world.js";
 import { Pond } from "./pond.js";
 import { connect } from "./net.js";
-import { ABILITIES, updateAbilities } from "./abilities.js";
 
 const AUTO_WHACK_MS = 4000;
 const SELF_WHACK_COOLDOWN_MS = 10000;
@@ -253,19 +252,75 @@ function guide(c) {
 function applyToPlayer(c) {
   const e = state.effects;
   const lines = [];
-  if (c.segfault) { state.score = Math.max(0, state.score - 10); lines.push("💥 segfault: core dumped (−10)"); }
-  if (c.sleep >= 2) { e.slow = Math.min(6, 2 + c.sleep); lines.push(`😴 sleep ×${c.sleep}: you are so, so tired`); }
-  if (c.coffee >= 2) { e.fast = Math.min(8, 3 + c.coffee); lines.push(`☕ coffee ×${c.coffee}: ZOOM`); }
-  if (c.rubber >= 2) { e.shield = Math.min(10, 4 + c.rubber * 2); lines.push(`🛟 rubber ×${c.rubber}: rubber duck shield up`); }
-  if (c.null >= 2) { e.hidden = Math.min(6, 2 + c.null); lines.push(`👻 null ×${c.null}: geese can't dereference you`); }
-  const fired = new Set();
-  for (const [word, n] of Object.entries(c)) {
-    const ability = ABILITIES[word];
-    if (!ability || fired.has(ability) || n < 3) continue;
-    fired.add(ability);
-    try { lines.push(ability(abilityCtx, n)); } catch (err) { console.warn("ability", word, err); }
+  if (c.segfault) { state.score = Math.max(0, state.score - 10); lines.push("segfault −10"); }
+  for (const [word, slug] of Object.entries(SPONSOR_SLUGS)) {
+    if ((c[word] || 0) >= 2) spawnLogo(word, slug);
   }
   return lines;
+}
+
+const SPONSOR_SLUGS = {
+  marshall: "marshallwace", wace: "marshallwace", brevan: "brevanhoward", howard: "brevanhoward",
+  capital: "capitalone", one: "capitalone", bloomberg: "bloomberg", netcraft: "netcraft",
+  incident: "incidentio", io: "incidentio",
+};
+const LOGO_FILES = {
+  marshallwace: "marshallwace.png", brevanhoward: "brevanhoward.png", capitalone: "capitalone.png",
+  bloomberg: "bloomberg.png", netcraft: "netcraft.jpg", incidentio: "incidentio.png",
+};
+const logoTextures = {};
+const logoLoader = new THREE.TextureLoader();
+const logos = [];
+const MAX_LOGOS = 4;
+
+function logoTexture(slug) {
+  if (!logoTextures[slug]) {
+    logoTextures[slug] = logoLoader.load(`logos/${LOGO_FILES[slug]}`);
+    logoTextures[slug].colorSpace = THREE.SRGBColorSpace;
+  }
+  return logoTextures[slug];
+}
+
+function spawnLogo(word, slug) {
+  if (logos.length >= MAX_LOGOS || logos.some((l) => l.userData.slug === slug)) return;
+  const g = new THREE.Group();
+  const card = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.2, 1.6),
+    new THREE.MeshBasicMaterial({ map: logoTexture(slug), side: THREE.DoubleSide }),
+  );
+  const backing = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 1.9), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+  backing.position.z = -0.02;
+  card.position.y = backing.position.y = 2.2;
+  const glow = new THREE.Mesh(glowGeo, glowMats.good);
+  glow.rotation.x = -Math.PI / 2;
+  glow.scale.setScalar(1.6);
+  const tag = wordTag(`${word} +50`, "good");
+  tag.position.y = 3.3;
+  tags.push(tag);
+  g.add(backing, card, glow, tag);
+  g.position.copy(world.randomLakePoint());
+  g.userData = { slug, word, born: performance.now() };
+  scene.add(g);
+  logos.push(g);
+}
+
+function updateLogos() {
+  const now = performance.now();
+  for (let i = logos.length - 1; i >= 0; i--) {
+    const g = logos[i];
+    g.rotation.y += 0.02;
+    g.children[0].position.y = g.children[1].position.y = 2.2 + Math.sin(now / 300 + i) * 0.25;
+    const grabbed = state.phase === "play" && g.position.distanceTo(duck.position) < 2.6;
+    if (grabbed) {
+      addPoints(50);
+      toast(`${icon("trophy")} ${g.userData.word} +50`, "score");
+      world.logoBurst?.(g.userData.word);
+    }
+    if (grabbed || now - g.userData.born > 25000) {
+      scene.remove(g);
+      logos.splice(i, 1);
+    }
+  }
 }
 
 async function doWhack(self) {
@@ -399,13 +454,6 @@ function ticker() {
   ticker.t = setTimeout(() => (el.hidden = true), 6000);
 }
 
-const abilityCtx = {
-  THREE, scene, duck, state, MAX_HP, world, pond, rain, flash,
-  get effects() { return state.effects; },
-  addScore: (n) => addPoints(Math.round(n)),
-  heal: (n) => { state.hp = Math.min(MAX_HP, state.hp + n); },
-  spawnFloatingText: (text) => log([text], "you"),
-};
 
 const dangerRings = [];
 const dangerGeo = new THREE.RingGeometry(1.6, 2.1, 28);
@@ -423,6 +471,69 @@ function updateDanger() {
     if (r.visible) r.position.set(hunters[i].group.position.x, world.lake.waterY + 0.35, hunters[i].group.position.z);
   });
   dangerMat.opacity = 0.55 + 0.35 * Math.abs(Math.sin(performance.now() / 150));
+}
+
+const TAG_KINDS = { goose: "bad", bug: "good", food: "good", rubber: "good" };
+const tagged = new WeakSet();
+const glowGeo = new THREE.RingGeometry(1.1, 1.5, 24);
+const glowMats = {
+  bad: new THREE.MeshBasicMaterial({ color: 0xff3b3b, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
+  good: new THREE.MeshBasicMaterial({ color: 0x3bff9a, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
+};
+function wordTag(text, mood) {
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 64;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = mood === "bad" ? "rgba(200,30,40,.85)" : "rgba(20,150,90,.85)";
+  ctx.beginPath();
+  ctx.roundRect(28, 10, 200, 44, 22);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 28px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(text, 128, 42);
+  const mat = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true });
+  mat.userData.outlineParameters = { visible: false };
+  const sp = new THREE.Sprite(mat);
+  sp.scale.set(2.4, 0.6, 1);
+  sp.userData.born = performance.now();
+  return sp;
+}
+const tags = [];
+function tagNewEntities() {
+  const lists = { goose: pond.geese, bug: pond.bugs, food: pond.foods, rubber: pond.rubbers };
+  for (const [kind, list] of Object.entries(lists)) {
+    for (const e of list || []) {
+      if (tagged.has(e)) continue;
+      tagged.add(e);
+      const mood = TAG_KINDS[kind];
+      const glow = new THREE.Mesh(glowGeo, glowMats[mood]);
+      glow.material.userData.outlineParameters = { visible: false };
+      glow.rotation.x = -Math.PI / 2;
+      glow.position.y = 0.05;
+      e.group.add(glow);
+      const tag = wordTag(kind === "food" ? e.food : kind, mood);
+      tag.userData.follow = e.group;
+      scene.add(tag);
+      tags.push(tag);
+    }
+  }
+}
+function fadeTags() {
+  const now = performance.now();
+  for (let i = tags.length - 1; i >= 0; i--) {
+    const t = tags[i];
+    const age = (now - t.userData.born) / 1000;
+    const f = t.userData.follow;
+    if (f) t.position.set(f.position.x, f.position.y + 1.4, f.position.z);
+    t.material.opacity = age < 3 ? 1 : Math.max(0, 1 - (age - 3));
+    if (age > 4) {
+      t.parent?.remove(t);
+      t.material.map.dispose();
+      t.material.dispose();
+      tags.splice(i, 1);
+    }
+  }
 }
 
 const ghosts = new Map();
@@ -672,8 +783,10 @@ function frame() {
   }
   updateGhosts(dt);
   updateDrops(dt);
+  tagNewEntities();
+  fadeTags();
+  updateLogos();
   updateDanger();
-  updateAbilities(abilityCtx, dt);
   if (now - lastPosSend > POS_SEND_MS && state.phase !== "menu") {
     lastPosSend = now;
     const p = duck.position;

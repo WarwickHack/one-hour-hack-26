@@ -39,21 +39,7 @@ Then open http://localhost:3026. There are no dependencies, just Node 18+ and a 
 | `merge` / `conflict` | two geese fight, one force-pushes itself off the lake |
 | `midnight` | time flies, pushing the clock toward 00:00 |
 
-When a sponsor or campus word shows up **3+ times** in one whack, you get its power:
-
-| Word | Power |
-|---|---|
-| `marshall` / `wace` | **Quant mode**: numbers rain, points ×2 for 5s |
-| `brevan` / `howard` | **Global macro**: a random payout |
-| `capital` / `one` | **Cashback**: £ rain, +1% of your score |
-| `bloomberg` | **Terminal**: DUCK ▲ 4.20%, +15 |
-| `netcraft` | **Phishing takedown**: 4s shield |
-| `incident` / `io` | **On-call**: 3s invulnerable |
-| `oculus` | **Lecture theatre**: 5s invisible |
-| `compsoc` | **Free pizza**: +1 ❤ |
-| `warwick` | **Duck density**: 2.3 ducks per rood ([really](https://theboar.org/2018/11/duck-density-warwick/)) |
-| `wifi` | **Eduroam dropped**: you lag |
-| `demo` | **Demo gods**: 3s invulnerable |
+Every word is either **bad** (red glow and tag: geese, meteors, segfault), **good** (green glow and tag: food, bugs to eat, rubber duck shield) or harmless scenery. When a sponsor word shows up 3+ times in one whack, its real logo bursts off its billboard with hearts and you get +20.
 
 The clock runs from 22:30 to 00:00, when PRs close. Scoring: +10 for each `whack()` you survive, +25 for each pizza or coffee you eat, +30 when your `whack()` lands on another duck, and +500 for making it to midnight 🏆. Red rings on the water mark danger: hunting geese and incoming meteors. The leaderboard keeps each duck's best score.
 
