@@ -87,3 +87,11 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 #banner.spectate { background: transparent; pointer-events: none; justify-content: flex-start; padding-top: 70px; }
 #banner.spectate .card { background: #0b1030d0; padding: 14px 26px; border-radius: 14px; }
 #banner.spectate h1 { font-size: 34px; }
+#file-panel { width: 330px; }
+#file .row { display: block; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #ffffff12; color: #f5f1e8; animation: none; }
+#file .row.newest { animation: rowIn .3s forwards; font-size: 15px; font-weight: 700; }
+#file .row span.hot { color: #ff7b6b; }
+#file .row span.good { color: #7ee0c3; }
+.src { color: #0b1030; font-weight: 800; font-size: 11px; padding: 1px 6px; border-radius: 4px; margin-right: 4px; }
+.ic, svg.lucide { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 3px; stroke-width: 2.4; }
+#file .row span { margin-right: 6px; white-space: nowrap; }

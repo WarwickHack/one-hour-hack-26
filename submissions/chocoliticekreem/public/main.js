@@ -146,11 +146,12 @@ function clockText() {
 function toast(text, cls) {
   const box = $("toasts");
   const el = document.createElement("div");
-  el.textContent = text;
+  el.innerHTML = text;
   el.className = cls;
   box.append(el);
   setTimeout(() => el.remove(), 3200);
   while (box.children.length > 3) box.firstChild.remove();
+  drawIcons();
 }
 
 function log(lines, cls) {
@@ -167,10 +168,17 @@ function log(lines, cls) {
 }
 
 const ICONS = {
-  goose: "🪿", honk: "📢", prod: "☄️", segfault: "💥", null: "👻", pointer: "👉", sleep: "😴", bug: "🐛",
-  overflow: "🗼", conflict: "⚔️", duck: "🦆", coffee: "☕", pizza: "🍕", rubber: "🛟", feature: "✨", prize: "🏆",
-  deploy: "🚀", merge: "🔀",
+  goose: "bird", honk: "megaphone", prod: "flame", segfault: "zap", null: "ghost", pointer: "mouse-pointer-2",
+  sleep: "moon", bug: "bug", overflow: "layers", stack: "layers", conflict: "swords", duck: "egg", coffee: "coffee",
+  pizza: "pizza", rubber: "life-buoy", feature: "sparkles", prize: "trophy", deploy: "rocket", merge: "git-merge",
+  commit: "git-commit-horizontal", push: "upload", wifi: "wifi", midnight: "moon-star", demo: "presentation",
+  pitch: "mic", whack: "hammer", hack: "terminal", quack: "message-circle", warwick: "landmark", oculus: "eye",
+  compsoc: "cpu", marshall: "chart-candlestick", wace: "chart-candlestick", brevan: "globe", howard: "globe",
+  capital: "credit-card", one: "credit-card", bloomberg: "chart-line", netcraft: "shield", incident: "siren",
+  io: "siren", semicolon: "code",
 };
+const icon = (name) => `<i data-lucide="${name}" class="ic"></i>`;
+const drawIcons = () => window.lucide?.createIcons();
 
 function playerColor(name) {
   let h = 0;
@@ -183,11 +191,20 @@ function shortName(name) {
   return n.length > 8 ? `${n.slice(0, 8)}…` : n;
 }
 
-function showEvents(lines) {
-  const clean = lines.filter(Boolean).map((l) => l.replace(/\s*×\d+/g, "")).slice(0, 7);
-  $("file").innerHTML = clean
-    .map((l, i) => `<div class="row" style="animation-delay:${i * 140}ms">${escapeHtml(l)}</div>`)
-    .join("") || `<div class="row">🫧 a quiet whack</div>`;
+const feed = [];
+function addFeed(source, words) {
+  const c = countWords(words);
+  const top = Object.entries(c)
+    .sort((a, b) => (!!ICONS[b[0]] - !!ICONS[a[0]]) || b[1] - a[1])
+    .slice(0, 2)
+    .map(([w]) => `<span class="${BAD.has(w) ? "hot" : GOOD.has(w) ? "good" : ""}">${icon(ICONS[w] || "circle")}${w}</span>`)
+    .join(" ");
+  const color = source === "server" ? "#8a90a8" : source === "you" ? "#ffd166" : playerColor(source);
+  const label = source === "server" ? "server" : source === "you" ? "you" : shortName(source);
+  feed.unshift(`<span class="src" style="background:${color}">${escapeHtml(label)}</span> ${top}`);
+  feed.length = Math.min(feed.length, 4);
+  $("file").innerHTML = feed.map((html, i) => `<div class="row${i === 0 ? " newest" : ""}" style="opacity:${1 - i * 0.22}">${html}</div>`).join("");
+  drawIcons();
 }
 
 function showFile(file, words, from) {
@@ -202,9 +219,7 @@ function showFile(file, words, from) {
     .join("");
   const panel = $("file-panel");
   panel.style.borderColor = from ? playerColor(from) : "transparent";
-  $("file-head").innerHTML = from
-    ? `<span class="dot" style="background:${playerColor(from)}"></span>${escapeHtml(shortName(from))}'s whack() · ${words.length}`
-    : `whack() · ${words.length}`;
+  $("file-head").innerHTML = "latest whack() calls";
   $("file").innerHTML = "";
 }
 
@@ -228,10 +243,10 @@ function countWords(words) {
 
 function guide(c) {
   const g = [];
-  if (c.goose || c.honk) g.push("🪿 GEESE — swim away!");
-  if (c.prod) g.push("☄️ METEOR — keep moving!");
-  if (c.bug || c.feature) g.push("🐛 bugs on the shore — eat them");
-  if (c.pizza || c.coffee) g.push("🍕 food on the lake — grab it");
+  if (c.goose || c.honk) g.push(`${icon("bird")} GEESE — swim away`);
+  if (c.prod) g.push(`${icon("flame")} METEOR — keep moving`);
+  if (c.bug || c.feature) g.push(`${icon("bug")} bugs on the shore — eat them`);
+  if (c.pizza || c.coffee) g.push(`${icon("pizza")} food on the lake — grab it`);
   return g;
 }
 
@@ -273,10 +288,11 @@ async function doWhack(self) {
   let playerLines;
   if (self) {
     const victim = net.sendWhack(words, (id) => ghosts.get(id)?.userData.target?.alive);
+    addFeed("you", words);
     addPoints(victim ? 30 : 10);
     header = victim
-      ? `🎯 ${shortName(victim)} ← ${threatChips(words)} · +30`
-      : `🫵 the lake ← ${threatChips(words)} · +10`;
+      ? `${icon("crosshair")} ${escapeHtml(shortName(victim))} ← ${threatChips(words)} · +30`
+      : `${icon("crosshair")} the lake ← ${threatChips(words)} · +10`;
     const me = pond.player;
     pond.player = null;
     pondLines = victim ? [] : pond.applyWhack(words) || [];
@@ -285,7 +301,7 @@ async function doWhack(self) {
   } else {
     pondLines = pond.applyWhack(words) || [];
     playerLines = state.phase === "play" ? applyToPlayer(c) : [];
-    showEvents([...playerLines, ...pondLines]);
+    addFeed("server", words);
     if (state.phase === "play") {
       toast("+10 survived whack()", "score");
       guide(c).slice(0, 2).forEach((g) => toast(g, "warn"));
@@ -300,13 +316,14 @@ function threatChips(words) {
     .filter(([w]) => ICONS[w] && BAD.has(w))
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
-    .map(([w, n]) => `${ICONS[w]}×${n}`)
-    .join(" ") || "🫧 nothing scary";
+    .map(([w]) => `${icon(ICONS[w])}${w}`)
+    .join(" ") || "nothing scary";
 }
 
 function showOutcome(text) {
   const el = $("outcome");
-  el.textContent = text;
+  el.innerHTML = text;
+  drawIcons();
   el.hidden = false;
   clearTimeout(el.timer);
   el.timer = setTimeout(() => (el.hidden = true), 6000);
@@ -316,10 +333,10 @@ function onResult({ victim, hearts, died }) {
   const bonus = hearts * 15 + (died ? 100 : 0);
   if (bonus) addPoints(bonus);
   showOutcome(died
-    ? `☠️ you KO'd ${shortName(victim)} · +${bonus}`
+    ? `${icon("skull")} you KO'd ${escapeHtml(shortName(victim))} · +${bonus}`
     : hearts
-      ? `💥 ${shortName(victim)} lost ${hearts}♥ · +${bonus}`
-      : `😶 ${shortName(victim)} dodged it`);
+      ? `${icon("heart-crack")} ${escapeHtml(shortName(victim))} lost ${hearts}♥ · +${bonus}`
+      : `${icon("wind")} ${escapeHtml(shortName(victim))} dodged it`);
 }
 
 function onWhacked({ from, fromId, words }) {
@@ -331,10 +348,10 @@ function onWhacked({ from, fromId, words }) {
   showFile(words.join("\n") + "\n", words, from);
   const pondLines = pond.applyWhack(words) || [];
   const playerLines = applyToPlayer(countWords(words));
-  showEvents([...playerLines, ...pondLines]);
+  addFeed(from, words);
   log([...pondLines].reverse());
   log([...playerLines].reverse(), "you");
-  toast("🎯 " + shortName(from) + " whacked you", "warn");
+  toast(`${icon("crosshair")} ${escapeHtml(shortName(from))} whacked you`, "warn");
   flash(playerColor(from));
 }
 
@@ -462,7 +479,7 @@ pond.onPlayerHit = (kind, by) => {
   state.hp -= dmg;
   state.effects.invuln = 1;
   flash(kind === "prod" ? "#ff8a00" : "#ff3b2f");
-  toast(kind === "prod" ? `☄️ hit −${dmg} ♥` : `🪿 bitten −${dmg} ♥`, "warn");
+  toast(kind === "prod" ? `${icon("flame")} hit −${dmg} ♥` : `${icon("bird")} bitten −${dmg} ♥`, "warn");
   if (state.hp <= 0) end(false, kind === "prod" ? "a PROD meteor" : by);
 };
 
@@ -633,9 +650,15 @@ function renderHud() {
   btn.disabled = playing && left > 0;
   btn.textContent = !playing ? "WHACK()" : left > 0 ? `recharging ${left}s` : net.peers.size ? `WHACK() a duck (${net.peers.size})` : "WHACK()";
   const e = state.effects;
-  $("effects").textContent = playing
-    ? [e.slow && "😴 slow", e.fast && "☕ fast", e.shield && "🛡️ shield", e.hidden && "👻 invisible", e.quant && "📈 ×2"].filter(Boolean).join("  ")
+  const fx = playing
+    ? [e.slow && `${icon("moon")}slow`, e.fast && `${icon("zap")}fast`, e.shield && `${icon("shield")}shield`,
+      e.hidden && `${icon("ghost")}invisible`, e.quant && `${icon("chart-candlestick")}×2`].filter(Boolean).join("  ")
     : "";
+  if (fx !== renderHud.fx) {
+    renderHud.fx = fx;
+    $("effects").innerHTML = fx;
+    drawIcons();
+  }
 }
 
 const clock = new THREE.Clock();

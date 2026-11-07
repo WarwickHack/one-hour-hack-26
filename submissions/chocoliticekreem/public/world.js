@@ -111,10 +111,13 @@ export function buildWorld(scene) {
     return mat;
   }
   const zero = () => 0;
+  const sponsorFx = new Map();
+  const bursts = [];
+  const logoLoader = new THREE.TextureLoader();
 
   // ---------- sky, fog, lights ----------
   const sky = {
-    top: C("#3d8fe0"), horizon: C("#d4ecff"),
+    top: C("#3a8ee6"), horizon: C("#cfe8ff"),
     topNight: C("#03061a"), horizonNight: C("#0b1030"),
     fog: C("#d4ecff"), fogNight: C("#0b1030"),
   };
@@ -122,12 +125,27 @@ export function buildWorld(scene) {
   scene.fog = new THREE.Fog(sky.fog.clone(), 150, 600);
 
   const skyMat = new THREE.ShaderMaterial({
-    uniforms: { top: { value: sky.top.clone() }, horizon: { value: sky.horizon.clone() } },
+    uniforms: {
+      top: { value: sky.top.clone() },
+      horizon: { value: sky.horizon.clone() },
+      sunDir: { value: new THREE.Vector3(-45, 110, 55).normalize() },
+    },
     vertexShader: `varying vec3 vPos; void main(){ vPos = normalize(position);
       gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform vec3 top; uniform vec3 horizon; varying vec3 vPos;
-      void main(){ float h = clamp(vPos.y * 1.6, 0.0, 1.0); gl_FragColor = vec4(mix(horizon, top, pow(h, 0.7)), 1.0);
-      #include <colorspace_fragment>
+    fragmentShader: `uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; varying vec3 vPos;
+      void main(){
+        vec3 d = normalize(vPos);
+        float h = clamp(d.y, 0.0, 1.0);
+        vec3 zenith = top * 0.78;
+        vec3 col = mix(horizon, top, smoothstep(0.0, 0.35, h));
+        col = mix(col, zenith, smoothstep(0.35, 1.0, h));
+        col = mix(col, vec3(1.0, 0.96, 0.9), pow(1.0 - h, 10.0) * 0.45);
+        float s = max(dot(d, sunDir), 0.0);
+        col += vec3(1.0, 0.85, 0.6) * pow(s, 12.0) * 0.18;
+        col += vec3(1.0, 0.92, 0.75) * pow(s, 90.0) * 0.5;
+        col += vec3(1.0, 0.98, 0.92) * smoothstep(0.9993, 0.9997, s) * 2.0;
+        gl_FragColor = vec4(col, 1.0);
+        #include <colorspace_fragment>
       }`,
     side: THREE.BackSide,
     depthWrite: false,
@@ -546,12 +564,12 @@ export function buildWorld(scene) {
 
   // ---------- sponsor billboards ----------
   const sponsors = [
-    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-103.5, 15.75], bg: "#0f2a4a", fg: "#ffffff" },
-    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-99, -38.25], bg: "#161616", fg: "#d8b45a" },
-    { name: "Capital One", keys: ["capital", "one"], pos: [103.5, 15.75], bg: "#004977", fg: "#ffffff" },
-    { name: "Bloomberg", keys: ["bloomberg"], pos: [103.5, -42.75], bg: "#000000", fg: "#ff9a1a" },
-    { name: "Netcraft", keys: ["netcraft"], pos: [-67.5, 65.25], bg: "#1d3c6e", fg: "#ffffff" },
-    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [67.5, 65.25], bg: "#f25533", fg: "#ffffff" },
+    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-103.5, 15.75], bg: "#0f2a4a", fg: "#ffffff", slug: "marshallwace", logo: "logos/marshallwace.png" },
+    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-99, -38.25], bg: "#161616", fg: "#d8b45a", slug: "brevanhoward", logo: "logos/brevanhoward.png" },
+    { name: "Capital One", keys: ["capital", "one"], pos: [103.5, 15.75], bg: "#004977", fg: "#ffffff", slug: "capitalone", logo: "logos/capitalone.png" },
+    { name: "Bloomberg", keys: ["bloomberg"], pos: [103.5, -42.75], bg: "#000000", fg: "#ff9a1a", slug: "bloomberg", logo: "logos/bloomberg.png" },
+    { name: "Netcraft", keys: ["netcraft"], pos: [-67.5, 65.25], bg: "#1d3c6e", fg: "#ffffff", slug: "netcraft", logo: "logos/netcraft.jpg" },
+    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [67.5, 65.25], bg: "#f25533", fg: "#ffffff", slug: "incidentio", logo: "logos/incidentio.png" },
   ];
   const postGeo = new THREE.CylinderGeometry(0.15, 0.18, 5.2, 6);
   const postMat = std("#3a3a40");
@@ -588,6 +606,30 @@ export function buildWorld(scene) {
     faceCamera(g);
     scene.add(g);
     avoid.push([s.pos[0], s.pos[1], 5]);
+    const fx = { origin: new THREE.Vector3(s.pos[0], 6.2, s.pos[1]), logoTex: null, last: -Infinity };
+    s.keys.forEach((k) => sponsorFx.set(k, fx));
+    logoLoader.load(s.logo, (logo) => {
+      logo.colorSpace = THREE.SRGBColorSpace;
+      fx.logoTex = logo;
+      const img = logo.image;
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+      if (!iw || !ih) return;
+      const cv = tex.image;
+      const g2 = cv.getContext("2d");
+      const w = cv.width;
+      const h = cv.height;
+      g2.fillStyle = "#ffffff";
+      g2.fillRect(0, 0, w, h);
+      g2.strokeStyle = s.bg;
+      g2.lineWidth = 14;
+      g2.strokeRect(14, 14, w - 28, h - 28);
+      const k = Math.min((w - 160) / iw, (h - 140) / ih);
+      const dw = iw * k;
+      const dh = ih * k;
+      g2.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      tex.needsUpdate = true;
+    }, undefined, () => {});
   }
 
   // ---------- lamps (<= 8 PointLights total) ----------
@@ -723,6 +765,44 @@ export function buildWorld(scene) {
     const k = word.toLowerCase().trim();
     const t = keyMap.get(k) || keyMap.get(k.replace(/[^a-z0-9.]/g, "")) || keyMap.get(k.replace(/[^a-z0-9]/g, ""));
     if (t) t.glow = Math.min(1.6, Math.max(1, t.glow + 0.6));
+    const fx = findFx(word);
+    const now = performance.now();
+    if (fx && now - fx.last >= 3000) {
+      fx.last = now;
+      logoBurst(word);
+    }
+  }
+
+  function findFx(word) {
+    if (typeof word !== "string") return null;
+    const k = word.toLowerCase().trim();
+    return sponsorFx.get(k) || sponsorFx.get(k.replace(/[^a-z0-9.]/g, "")) || sponsorFx.get(k.replace(/[^a-z0-9]/g, "")) || null;
+  }
+  const heartTex = canvasTexture(128, 128, (g2, w, h) => {
+    g2.font = "bold 110px system-ui, sans-serif";
+    g2.textAlign = "center";
+    g2.textBaseline = "middle";
+    g2.fillStyle = "#ff5fa2";
+    g2.fillText("\u2665", w / 2, h / 2 + 6);
+  });
+  function spawnSprite(map, scale, origin) {
+    const mat = new THREE.SpriteMaterial({ map, transparent: true, depthWrite: false, sizeAttenuation: true });
+    mat.userData.outlineParameters = { visible: false };
+    const sp = new THREE.Sprite(mat);
+    const aspect = map.image && map.image.width && map.image.height ? map.image.width / map.image.height : 1;
+    sp.scale.set(scale * Math.min(aspect, 3), scale * (aspect > 3 ? 3 / aspect : 1), 1);
+    sp.position.copy(origin);
+    const a = Math.random() * Math.PI * 2;
+    const out = 3 + Math.random() * 4;
+    const vel = new THREE.Vector3(Math.cos(a) * out, 7 + Math.random() * 5, Math.sin(a) * out);
+    scene.add(sp);
+    bursts.push({ sp, mat, vel, age: 0, life: 2.5, spin: (Math.random() - 0.5) * 4 });
+  }
+  function logoBurst(word) {
+    const fx = findFx(word);
+    if (!fx) return;
+    if (fx.logoTex) for (let i = 0; i < 12; i++) spawnSprite(fx.logoTex, 1.5, fx.origin);
+    for (let i = 0; i < 5; i++) spawnSprite(heartTex, 0.9, fx.origin);
   }
 
   const sunDusk = C("#fff6e5");
@@ -780,6 +860,23 @@ export function buildWorld(scene) {
 
     clouds.rotation.y = time * 0.004;
 
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const b = bursts[i];
+      b.age += dt;
+      b.vel.y -= 9 * dt;
+      if (b.vel.y < -2.5) b.vel.y = -2.5;
+      b.vel.x *= 1 - 0.8 * dt;
+      b.vel.z *= 1 - 0.8 * dt;
+      b.sp.position.addScaledVector(b.vel, dt);
+      b.mat.rotation += b.spin * dt;
+      b.mat.opacity = Math.max(0, 1 - b.age / b.life);
+      if (b.age >= b.life) {
+        scene.remove(b.sp);
+        b.mat.dispose();
+        bursts.splice(i, 1);
+      }
+    }
+
     if (state.flash > 0) state.flash = Math.max(0, state.flash - dt / 0.4);
     flashLight.intensity = state.flash * state.flash * 5;
   }
@@ -793,6 +890,7 @@ export function buildWorld(scene) {
     randomShorePoint,
     piazza,
     highlight,
+    logoBurst,
     setNight,
     flash,
     update,
