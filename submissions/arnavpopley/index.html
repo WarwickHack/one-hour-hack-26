@@ -388,7 +388,7 @@ async function finale(ev, my) {
 }
 
 async function execute(prog, trace, ending, target, my, steps) {
-  phase("run");
+  phase(target ? "run" : null);  // wild programs weren't bred, so no phase lights up
   $("chartPanel").hidden = true;
   $("vmPanel").hidden = false;
   const chips = [...$("tape").children];

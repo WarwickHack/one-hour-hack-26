@@ -430,7 +430,7 @@ def breed_cli(target):
                     sys.stdout.write(dashboard(ev, note))
                     sys.stdout.flush()
                 elif ev["gen"] % 250 == 0:
-                    print(f"gen {ev['gen']:,}  whack() calls {ev['calls']:,}  best {show(ev['out'])!r}")
+                    print(f"gen {ev['gen']:,}  whack() calls {ev['calls']:,}  best {show(ev['out'])[:30]!r}")
     finally:
         if TTY:
             sys.stdout.write("\x1b[?25h\x1b[2J\x1b[H")
@@ -493,6 +493,13 @@ def census(n=1000):
 def main():
     args = sys.argv[1:]
     cmd = args[0] if args else ""
+    if cmd not in ("", "ops", "evolve", "census", "trace", "run"):
+        print(__doc__)
+        return
+    if cmd in ("run", "trace") and (len(args) < 2 or not os.path.exists(args[1])):
+        missing = f"No file called {args[1]!r}. " if len(args) > 1 else ""
+        print(f"{missing}Usage: python3 brainwhack.py {cmd} FILE   (try: python3 brainwhack.py {cmd} bred_HONK.wl)")
+        return
     if cmd == "ops":
         for fam, ws in FAMILIES.items():
             print(bold(fam))
@@ -501,7 +508,7 @@ def main():
     elif cmd == "evolve":
         breed_cli(args[1] if len(args) > 1 else None)
     elif cmd == "census":
-        census(int(args[1]) if len(args) > 1 else 1000)
+        census(int(args[1]) if len(args) > 1 and args[1].isdigit() else 1000)
     elif cmd == "trace":
         trace_cli(args[1])
     else:
@@ -519,4 +526,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nStopped. Honk.")

@@ -7,6 +7,7 @@ Open http://localhost:8026/?breed=HONK to start breeding straight away.
 """
 import json
 import os
+import sys
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -15,7 +16,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))  # whack() writes its file 
 from whack import WORDS, whack  # noqa: E402
 from brainwhack import DOCS, FAMILY, INDEX, WhackRandom, evolve, run, save, whack_target  # noqa: E402
 
-PORT = 8026
+PORT = int(os.environ.get("PORT", 8026))
 
 
 def payload(ev):
@@ -94,5 +95,12 @@ class Lab(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", PORT), Lab)
+    except OSError:
+        sys.exit(f"Port {PORT} is busy. Is the lab already running? Or pick another: PORT=8027 python3 whack_lab.py")
     print(f"BrainWhack Lab on http://localhost:{PORT}   (or http://localhost:{PORT}/?breed=HONK)")
-    ThreadingHTTPServer(("127.0.0.1", PORT), Lab).serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nLab closed. Honk.")
