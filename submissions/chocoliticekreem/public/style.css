@@ -121,3 +121,8 @@ aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
   box-shadow: 0 4px 0 rgba(0,0,0,.25); }
 #next { border-radius: 10px; }
 #next-bar { background: linear-gradient(90deg, #ff8f7e, #ffd166); }
+#live { position: fixed; top: 86px; right: 14px; left: auto; bottom: auto; width: 210px; border-radius: 16px; padding-bottom: 8px; }
+#live[hidden] { display: none; }
+.live-row { display: flex; justify-content: space-between; padding: 3px 12px; font-size: 15px; }
+.live-row.me { color: #ffd166; font-weight: 700; }
+.live-row em { font-style: normal; font-size: 11px; opacity: .6; margin-left: 4px; }

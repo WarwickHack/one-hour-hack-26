@@ -585,11 +585,16 @@ const bots = BOT_NAMES.map((name) => {
   group.add(nameTag(name));
   group.position.copy(world.randomLakePoint());
   scene.add(group);
-  return { name, group, heading: Math.random() * Math.PI * 2, hp: MAX_HP, deadUntil: 0, nextWhack: performance.now() + 8000 + Math.random() * 10000 };
+  return { name, group, heading: Math.random() * Math.PI * 2, hp: MAX_HP, deadUntil: 0, score: 0, nextWhack: performance.now() + 8000 + Math.random() * 10000 };
 });
 
+let lastBotScore = 0;
 function updateBots(dt) {
   const now = performance.now();
+  if (state.phase === "play" && now - lastBotScore > 4000) {
+    lastBotScore = now;
+    for (const b of bots) if (!b.deadUntil) b.score += 10 + Math.floor(Math.random() * 20);
+  }
   for (const b of bots) {
     if (b.deadUntil && now > b.deadUntil) {
       b.deadUntil = 0;
@@ -713,6 +718,7 @@ function start() {
   $("banner").hidden = true;
   $("toasts").innerHTML = "";
   state.nextAuto = performance.now() + 1500;
+  bots.forEach((b, i) => { b.nextWhack = performance.now() + 10000 + i * 7000; b.score = 0; });
 }
 
 async function end(survived, diedTo) {
@@ -804,7 +810,27 @@ function updateCamera(dt) {
   orbit.target.copy(duck.position);
 }
 
+let lastLive = 0;
+function renderLive() {
+  const now = performance.now();
+  if (now - lastLive < 500) return;
+  lastLive = now;
+  const rows = [];
+  if (state.phase === "play") rows.push({ name: state.name, score: state.score, me: true });
+  for (const b of bots) if (!b.deadUntil) rows.push({ name: b.name, score: b.score, bot: true });
+  for (const g of ghosts.values()) {
+    const t = g.userData.target;
+    if (t?.alive) rows.push({ name: t.name, score: t.score || 0 });
+  }
+  rows.sort((a, b) => b.score - a.score);
+  const el = $("live");
+  el.hidden = state.phase !== "play";
+  el.innerHTML = `<div class="panel-head">live ranking</div>${rows.slice(0, 6).map((r, i) =>
+    `<div class="live-row${r.me ? " me" : ""}"><span>${i + 1}. ${escapeHtml(shortName(r.name))}${r.bot ? " <em>bot</em>" : ""}</span><b>${r.score}</b></div>`).join("")}`;
+}
+
 function renderHud() {
+  renderLive();
   const playing = state.phase === "play";
   $("clock").textContent = clockText();
   const toNext = Math.max(0, state.nextAuto - performance.now()) / AUTO_WHACK_MS;
@@ -846,7 +872,7 @@ function frame() {
   if (now - lastPosSend > POS_SEND_MS && state.phase !== "menu") {
     lastPosSend = now;
     const p = duck.position;
-    net.sendPos({ x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), heading: +state.heading.toFixed(2), alive: state.phase === "play" });
+    net.sendPos({ x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), heading: +state.heading.toFixed(2), alive: state.phase === "play", score: state.score });
   }
   if ((state.phase === "dead" || state.phase === "won") && currentRound() !== state.round) {
     state.phase = "menu";

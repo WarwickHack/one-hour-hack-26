@@ -1242,9 +1242,7 @@ export class Pond {
     e.group.scale.setScalar(Math.max(0.001, e.baseScale * e.grow * pop));
 
     if (e.glitchUntil) {
-      e.group.visible = Math.random() > 0.45;
-      e.group.position.set(e.pos.x + rand(-0.3, 0.3), e.group.position.y, e.pos.z + rand(-0.3, 0.3));
-      e.inner.rotation.y = rand(-0.4, 0.4);
+      e.group.scale.setScalar(Math.max(0.001, e.baseScale * clamp01(e.glitchUntil - t)));
       if (t > e.glitchUntil) {
         if (e.hunter) e.hunter.prey = null;
         if (e.prey) e.prey.hunter = null;
