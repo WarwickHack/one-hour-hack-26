@@ -67,3 +67,13 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 .chip.hot { color: #ff7b6b; background: #ff3b2f22; }
 .chip.good { color: #7ee0c3; background: #2fd09a1c; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+#outcome { position: fixed; bottom: 128px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 999px;
+  background: #ffd166; color: #1b0f0a; font-size: 20px; font-weight: 800; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 4px 18px #0006; }
+#outcome[hidden] { display: none; }
+#file { display: block; padding: 2px 10px 10px; }
+.row { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; color: #f5f1e8cc;
+  opacity: 0; animation: rowIn .25s forwards; }
+.row.hot { color: #ff7b6b; }
+.row.good { color: #7ee0c3; }
+@keyframes rowIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }

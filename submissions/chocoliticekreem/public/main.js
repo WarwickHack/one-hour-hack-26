@@ -187,10 +187,12 @@ function shortName(name) {
 function showFile(file, words, from) {
   const c = countWords(file.trimEnd().split("\n"));
   const chips = Object.entries(c)
-    .filter(([w]) => ICONS[w])
-    .sort((a, b) => (BAD.has(b[0]) - BAD.has(a[0])) || b[1] - a[1])
-    .slice(0, 9)
-    .map(([w, n]) => `<span class="chip ${BAD.has(w) ? "hot" : "good"}">${ICONS[w]}×${n}</span>`)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([w, n], i) => {
+      const cls = BAD.has(w) ? "hot" : GOOD.has(w) ? "good" : "";
+      return `<div class="row ${cls}" style="animation-delay:${i * 90}ms"><span>${ICONS[w] || "·"} ${w}</span><b>×${n}</b></div>`;
+    })
     .join("");
   const panel = $("file-panel");
   panel.style.borderColor = from ? playerColor(from) : "transparent";
@@ -264,11 +266,11 @@ async function doWhack(self) {
   let pondLines;
   let playerLines;
   if (self) {
-    const victim = net.sendWhack(words);
+    const victim = net.sendWhack(words, (id) => ghosts.get(id)?.userData.target?.alive);
     addPoints(victim ? 30 : 10);
     header = victim
-      ? `🎯 whacked ${victim} +30`
-      : "🫵 whacked the lake +10";
+      ? `🎯 ${shortName(victim)} ← ${threatChips(words)} · +30`
+      : `🫵 the lake ← ${threatChips(words)} · +10`;
     const me = pond.player;
     pond.player = null;
     pondLines = victim ? [] : pond.applyWhack(words) || [];
@@ -282,11 +284,43 @@ async function doWhack(self) {
       guide(c).slice(0, 2).forEach((g) => toast(g, "warn"));
     }
   }
-  if (self) toast(header, "score");
+  if (self) showOutcome(header);
 }
 
-function onWhacked({ from, words }) {
+function threatChips(words) {
+  const c = countWords(words);
+  return Object.entries(c)
+    .filter(([w]) => ICONS[w] && BAD.has(w))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([w, n]) => `${ICONS[w]}×${n}`)
+    .join(" ") || "🫧 nothing scary";
+}
+
+function showOutcome(text) {
+  const el = $("outcome");
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(el.timer);
+  el.timer = setTimeout(() => (el.hidden = true), 6000);
+}
+
+function onResult({ victim, hearts, died }) {
+  const bonus = hearts * 15 + (died ? 100 : 0);
+  if (bonus) addPoints(bonus);
+  showOutcome(died
+    ? `☠️ you KO'd ${shortName(victim)} · +${bonus}`
+    : hearts
+      ? `💥 ${shortName(victim)} lost ${hearts}♥ · +${bonus}`
+      : `😶 ${shortName(victim)} dodged it`);
+}
+
+function onWhacked({ from, fromId, words }) {
   if (state.phase !== "play") return;
+  const hpBefore = state.hp;
+  setTimeout(() => {
+    net.sendResult(fromId, { hearts: Math.max(0, hpBefore - Math.max(0, state.hp)), died: state.phase === "dead" });
+  }, 5000);
   showFile(words.join("\n") + "\n", words, from);
   const pondLines = pond.applyWhack(words) || [];
   const playerLines = applyToPlayer(countWords(words));
@@ -410,7 +444,7 @@ function updateGhosts(dt) {
 }
 
 const playerId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 8);
-const net = connect({ id: playerId, name: "lurker", onPos, onLeave, onWhacked });
+const net = connect({ id: playerId, name: "lurker", onPos, onLeave, onWhacked, onResult });
 let lastPosSend = 0;
 
 pond.onPlayerHit = (kind, by) => {
