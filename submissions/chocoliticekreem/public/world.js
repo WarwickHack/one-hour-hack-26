@@ -117,9 +117,9 @@ export function buildWorld(scene) {
 
   // ---------- sky, fog, lights ----------
   const sky = {
-    top: C("#3a8ee6"), horizon: C("#cfe8ff"),
+    top: C("#6cb8ff"), horizon: C("#e4f3ff"),
     topNight: C("#03061a"), horizonNight: C("#0b1030"),
-    fog: C("#d4ecff"), fogNight: C("#0b1030"),
+    fog: C("#e4f3ff"), fogNight: C("#0b1030"),
   };
   scene.background = sky.horizon.clone();
   scene.fog = new THREE.Fog(sky.fog.clone(), 150, 600);
@@ -136,7 +136,7 @@ export function buildWorld(scene) {
       void main(){
         vec3 d = normalize(vPos);
         float h = clamp(d.y, 0.0, 1.0);
-        vec3 zenith = top * 0.78;
+        vec3 zenith = top * 0.95;
         vec3 col = mix(horizon, top, smoothstep(0.0, 0.35, h));
         col = mix(col, zenith, smoothstep(0.35, 1.0, h));
         col = mix(col, vec3(1.0, 0.96, 0.9), pow(1.0 - h, 10.0) * 0.45);
@@ -153,6 +153,7 @@ export function buildWorld(scene) {
   });
   const skyDome = new THREE.Mesh(new THREE.SphereGeometry(500, 32, 16), skyMat);
   skyDome.renderOrder = -1;
+  skyMat.userData.outlineParameters = { visible: false };
   skyDome.frustumCulled = false;
   // follow the camera so the dome never crosses camera.far (600) wherever the duck swims
   skyDome.onBeforeRender = (_r, _s, cam) => {
