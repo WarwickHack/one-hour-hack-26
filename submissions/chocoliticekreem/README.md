@@ -59,6 +59,8 @@ The clock runs from 22:30 to 00:00, when PRs close. Scoring: +10 for each `whack
 
 ## Multiplayer
 
-Every duck online sees the others with name tags. Pressing SPACE calls `whack()` and sends the whole word list to a random other player, so their geese, meteors and segfaults come from you, and you score double. With nobody else online, it lands on the lake instead. One target per throw and a 10-second cooldown keep a 20-duck lake from turning into a massacre.
+Every duck online sees the others with name tags. Pressing SPACE calls `whack()` and sends the whole word list to a random other player, so their geese, meteors and segfaults come from you, and you score double. With nobody else online, it lands on the lake instead. One target per throw and a 10-second cooldown keep a 20-duck lake from turning into a massacre. Five seconds later the victim's game reports back: +15 for every heart they lost, +100 for a KO, or "they dodged it".
+
+Rounds are shared 3-minute windows, so everyone online hits midnight together. Every score is stored with its round. The menu shows the top 5 for this round, last round (with the winner 👑) and all time.
 
 The hosted version runs the same `whack.js` in a Vercel function, from `/tmp` because that's the only writable folder there. Positions sync over Supabase Realtime, and scores are stored in Supabase.

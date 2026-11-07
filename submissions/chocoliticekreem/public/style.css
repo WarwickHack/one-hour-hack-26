@@ -77,3 +77,8 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 .row.hot { color: #ff7b6b; }
 .row.good { color: #7ee0c3; }
 @keyframes rowIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.side { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 22px;
+  background: #0b1030b0; padding: 16px 18px; border-radius: 12px; }
+.side-left { left: 28px; }
+.side-right { right: 28px; }
+@media (max-width: 900px) { .side { position: static; transform: none; } }

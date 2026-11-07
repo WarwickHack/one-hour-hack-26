@@ -14,7 +14,6 @@ const DEADLINE = 90;
 const ROUND_MS = 180000;
 const currentRound = () => Math.floor(Date.now() / ROUND_MS);
 const roundFrac = () => (Date.now() % ROUND_MS) / ROUND_MS;
-let boardView = "current";
 const MAX_HP = 5;
 const BAD = new Set(["goose", "honk", "prod", "segfault", "null", "pointer", "overflow", "conflict", "sleep", "bug"]);
 const GOOD = new Set(["duck", "coffee", "pizza", "rubber", "feature", "prize", "deploy", "merge"]);
@@ -488,14 +487,10 @@ async function fetchBoards() {
   }
 }
 
-async function leaderboardHtml(mode = "menu") {
+async function leaderboardHtml() {
   const b = await fetchBoards();
-  if (mode === "menu") {
-    return `<div class="boards">${boardList("This round", b.current || [])}${boardList("Last round", b.last || [], true)}${boardList("All time", b.allTime || [])}</div>`;
-  }
-  return boardView === "last"
-    ? `${boardList("Last round", b.last || [], true)}<p class="sub"><span class="key">L</span> this round</p>`
-    : `${boardList("This round", b.current || [])}<p class="sub"><span class="key">L</span> last round</p>`;
+  return `<div class="side side-left">${boardList("This round", b.current || [])}${boardList("Last round", b.last || [], true)}</div>
+    <div class="side side-right">${boardList("All time", b.allTime || [])}</div>`;
 }
 
 function escapeHtml(s) {
@@ -545,7 +540,7 @@ async function end(survived, diedTo) {
   b.innerHTML = `
     <h1>${survived ? "SURVIVED 🏆" : "QUACKED"}</h1>
     <p class="sub">${survived ? "" : `${escapeHtml(diedTo)} got you · `}<b>${state.score}</b></p>
-    <div id="end-board">${await leaderboardHtml("end")}</div>
+    ${await leaderboardHtml()}
     <p><span class="key">ENTER</span> next round</p>`;
 }
 
@@ -557,11 +552,6 @@ addEventListener("keydown", (ev) => {
     return;
   }
   if (ev.target.tagName === "INPUT") return;
-  if (k === "l" && state.phase !== "play" && state.phase !== "menu") {
-    boardView = boardView === "last" ? "current" : "last";
-    leaderboardHtml("end").then((html) => { const el = $("end-board"); if (el) el.innerHTML = html; });
-    return;
-  }
   if (k === " ") { ev.preventDefault(); selfWhack(); return; }
   keys.add(k);
 });
