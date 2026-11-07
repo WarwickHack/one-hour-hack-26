@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grammar vs The Deadline</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=JetBrains+Mono:wght@500;800&display=swap" rel="stylesheet">
+  <style>
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+  <header><div><span class="eyebrow">WHACK / PROTOTYPE 03</span><h1>Grammar vs The Deadline</h1></div><button id="show-rules">Field guide / rules</button></header>
+  <div class="stage">
+  <canvas id="c" width="1280" height="720" aria-label="Word army battles the Deadline clock boss"></canvas>
+  <div id="start-gate"><span class="eyebrow">YOUR WORDS. YOUR ARMY.</span><h2>Time to make some noise.</h2><button id="start-battle">Start battle · QUACK</button><p>Sound on. The deadline is listening.</p></div>
+  </div>
+  <div class="controls"><div class="speeds" role="group" aria-label="Battle speed"><span>Speed</span><button data-speed="0.5" aria-pressed="false">0.5×</button><button data-speed="1" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="4" aria-pressed="false">4×</button><button data-speed="10" aria-pressed="false">10×</button></div><p id="action-label" aria-live="polite">Ready when you are.</p><button id="restart">New battle <kbd>R</kbd></button></div>
+  <div class="audio-controls"><button id="sound-toggle" aria-pressed="true">Sound on</button><label for="volume">Volume</label><input id="volume" type="range" min="0" max="100" value="55" aria-label="Sound effects volume"></div>
+  <p class="hint">Watch words become heroes, modifiers and attacks. Hold Space for 4×. Opening the field guide pauses the battle.</p>
+  </main>
+  <dialog id="rules" aria-labelledby="rules-title"><div class="dialog-head"><div><span class="eyebrow">THE FIELD GUIDE</span><h2 id="rules-title">Make every word count.</h2></div><button id="close-rules" aria-label="Close field guide">Close ×</button></div><div id="rules-content"></div></dialog>
+  <script src="engine.js"></script>
+  <script src="rules.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
