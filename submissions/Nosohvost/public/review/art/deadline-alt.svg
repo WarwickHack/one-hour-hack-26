@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">The Deadline — five minutes from a meltdown</title>
+  <desc id="desc">Optional revised clock boss. A battered brass alarm clock stomps on purple boots, with jagged eyebrows, furious eyes, a toothy shout and quivering bells. Transparent background.</desc>
+  <defs>
+    <linearGradient id="brass" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffdc77"/><stop offset=".6" stop-color="#e9aa41"/><stop offset="1" stop-color="#ad642f"/></linearGradient>
+    <radialGradient id="dial" cx=".36" cy=".28" r=".83"><stop stop-color="#fff9dc"/><stop offset="1" stop-color="#f2c299"/></radialGradient>
+  </defs>
+  <g stroke="#1b1430" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m107 263-10 20m111-21 12 20" fill="none" stroke-width="12"/>
+    <path d="M96 279Q84 274 72 285L67 294Q88 305 115 295L115 283Z" fill="#5b426b"/>
+    <path d="M216 279Q233 275 247 285L253 293Q231 305 205 295L204 285Z" fill="#5b426b"/>
+    <path d="M76 291 106 291m110 1 27-1" fill="none" stroke="#a77ba0" stroke-width="2.5"/>
+    <path d="m92 71-8-17m139 16 9-15" fill="none" stroke-width="9"/>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-2 85 53;2 85 53;-2 85 53" dur=".5s" repeatCount="indefinite"/>
+      <path d="M48 57Q43 28 68 22 97 17 109 43L106 49 53 64Z" fill="url(#brass)"/>
+      <path d="M55 57 104 44M58 40Q62 29 77 29" fill="none" stroke="#fff0b2" stroke-width="3"/>
+      <path d="m68 21-2-6 12-3 2 6" fill="#dd9e39" stroke-width="3"/>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="2 233 53;-2 233 53;2 233 53" dur=".5s" repeatCount="indefinite"/>
+      <path d="M209 43Q222 17 248 23 276 30 269 60L263 64 211 49Z" fill="url(#brass)"/>
+      <path d="m216 44 47 14m-33-29q15-1 24 10" fill="none" stroke="#fff0b2" stroke-width="3"/>
+      <path d="m239 19 2-6 12 4-2 6" fill="#dd9e39" stroke-width="3"/>
+    </g>
+    <path d="M155 50V30h12v20" fill="#674460"/>
+    <path d="M145 28Q160 22 176 28L173 34h-27Z" fill="#efb649" stroke-width="3.5"/>
+    <path d="M44 162Q42 92 94 64 140 38 197 52 260 64 275 126 291 182 255 233 219 281 158 280 94 280 62 232 45 205 44 162Z" fill="url(#brass)" stroke-width="5.5"/>
+    <path d="M58 130Q66 82 111 67m-4 198q30 12 61 9" fill="none" stroke="#ffe8a1" stroke-width="3"/>
+    <path d="M64 165Q62 108 108 80 157 53 207 80 258 107 258 166 257 220 214 248 163 277 112 249 64 225 64 165Z" fill="url(#dial)"/>
+    <path d="M78 161Q76 112 113 89" fill="none" stroke="#fffbea" stroke-width="3"/>
+    <g stroke="#9a705b" stroke-width="3.5" fill="none">
+      <path d="m113 91 5 9m44-21v12m45 2-6 10m35 24-10 5m18 37h-12m-4 43-10-6m-16 38-5-10m-36 21v-12m-47 0 6-10m-39-19 11-5m-21-36h12m1-42 10 6"/>
+    </g>
+    <!-- Hands retain the last-hour clock concept; no text is needed at sprite scale. -->
+    <path d="m161 167-25-47" fill="none" stroke-width="9"/>
+    <path d="m161 167 7-68-6 5m6-5 5 7" fill="none" stroke="#cf3c4b" stroke-width="5"/>
+    <circle cx="161" cy="167" r="8" fill="#eab35c" stroke-width="3"/>
+    <path d="M93 133Q109 124 136 141L137 156Q115 167 98 157Z" fill="#fffdf1" stroke-width="3.5"/>
+    <path d="M185 142Q205 122 229 128L225 153Q210 166 187 157Z" fill="#fffdf1" stroke-width="3.5"/>
+    <ellipse cx="112" cy="147" rx="7" ry="10" fill="#832e44" stroke-width="2.5"/>
+    <ellipse cx="199" cy="145" rx="7" ry="10" fill="#832e44" stroke-width="2.5"/>
+    <circle cx="110" cy="143" r="2" fill="#fff" stroke="none"/><circle cx="197" cy="141" r="2" fill="#fff" stroke="none"/>
+    <path d="m91 118 49 20-6-12M182 137l47-24-6 11" fill="none" stroke-width="7"/>
+    <path d="M113 202Q158 182 205 198L213 218Q199 241 165 239 130 239 109 219Z" fill="#49233b" stroke-width="4"/>
+    <path d="m115 202 15-4 5 15 11-18 13-1 8 18 9-18 14 1 5 17 10-13" fill="#fff3cf" stroke-width="2.4"/>
+    <path d="M145 232Q163 218 184 232" fill="#e86a70" stroke-width="2.5"/>
+    <path d="m88 190 7 3m133-11 5-4m-3 8 6-2" fill="none" stroke="#d58b6f" stroke-width="2.3"/>
+    <path d="m246 93-5 12 7 8-9 14m-174 83 11-3 3 9" fill="none" stroke="#8e5938" stroke-width="2.5"/>
+    <path d="m30 96-10-4m17-6-7-8m254 28 11-3m-18-10 6-9" fill="none" stroke="#e9a94d" stroke-width="3"/>
+  </g>
+</svg>

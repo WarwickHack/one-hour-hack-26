@@ -23,8 +23,24 @@ async function run(words, speed) {
     fetch: async () => ({json: async () => words}),
     performance: {now: () => now}, addEventListener: noop,
     requestAnimationFrame: fn => {frame = fn;},
+    window: {},
   });
+  vm.runInContext(fs.readFileSync(__dirname + '/public/audio.js','utf8'),scope);
   vm.runInContext(source, scope);
+  // A fifth-token recruit is hit by the boss in the same computed step.
+  // It must still enter at full displayed HP, then lose HP on the shown hit.
+  vm.runInContext(`{
+    const b = new Engine.Battle(['whack','hack','honk','push','duck']);
+    for(let i=0;i<4;i++)b.step();
+    const events=b.step(), join=events.find(e=>e.type==='join'), hit=events.find(e=>e.type==='bossAttack');
+    handleEvent(join);
+    if(vis.get(join.hero.id).hp!==join.hero.maxHp)throw new Error('Spawned with future damage');
+    handleEvent(hit);
+    if(vis.get(join.hero.id).hp!==join.hero.maxHp-hit.dmg)throw new Error('Visible boss hit did not reduce health');
+    events.filter(e=>e.type==='health').forEach(handleEvent);
+    if(vis.get(join.hero.id).hp!==join.hero.hp)throw new Error('Displayed health drifted');
+  }`,scope);
+  vm.runInContext('newBattle()',scope);
   await new Promise(resolve => setImmediate(resolve));
   vm.runInContext(`speed = ${speed}`, scope);
   let frames = 0;
@@ -53,11 +69,11 @@ async function run(words, speed) {
   ];
   for(const words of fixtures) {
     const runs=[];
-    for(const speed of [.5,1,2,4]) runs.push(await run(words,speed));
+    for(const speed of [.5,1,2,4,10]) runs.push(await run(words,speed));
     for(const r of runs) assert.equal(r.result,runs[0].result,'Speed changed outcome');
     // Frame boundaries introduce small rounding differences across long lists.
-    assert.ok(Math.abs(runs[0].seconds/runs[3].seconds/8-1)<.02,'Speed ratio is wrong');
-    console.log('PASS speeds 0.5/1/2/4:',runs.map(r=>r.seconds.toFixed(1)+'s').join(' / '));
+    assert.ok(Math.abs(runs[0].seconds/runs[4].seconds/20-1)<.035,'Speed ratio is wrong');
+    console.log('PASS speeds 0.5/1/2/4/10:',runs.map(r=>r.seconds.toFixed(1)+'s').join(' / '));
   }
   console.log('PASS: all 28 sprites present; no interrupted actions, stalled battles or restart leaks.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

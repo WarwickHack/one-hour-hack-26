@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">The Deadline — current canvas artwork</title>
+  <desc id="desc">Faithful standalone transcription of drawBoss in game.js at time zero, progress zero, no lunge, push, flash or rage. The clock reads 23:00. The game HUD is excluded. Original geometry is uniformly scaled by 0.8 and centred for comparison.</desc>
+  <defs>
+    <linearGradient id="rim" gradientUnits="userSpaceOnUse" x1="-150" y1="-150" x2="150" y2="150"><stop stop-color="#f2c75c"/><stop offset="1" stop-color="#8a5a1c"/></linearGradient>
+    <radialGradient id="face" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="132" fx="-30" fy="-40" fr="10"><stop stop-color="#fffaf0"/><stop offset="1" stop-color="#f0debe"/></radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="15"/></filter>
+  </defs>
+  <g transform="translate(160 166) scale(.8)">
+    <!-- Ground + 95 minus BY = 150; foot centre = 153. -->
+    <g stroke="#1b1430" stroke-linecap="round">
+      <path d="m-48 130-12 20m108-20 12 20" fill="none" stroke-width="16"/>
+      <g fill="#3a2a5a" stroke-width="4"><ellipse cx="-50" cy="153" rx="30" ry="12"/><ellipse cx="70" cy="153" rx="30" ry="12"/></g>
+      <g fill="#d9a83a" stroke-width="5"><path d="M-38 0A38 38 0 0 1 38 0Z" transform="translate(-95 -120) rotate(-28.6478897565)"/><path d="M-38 0A38 38 0 0 1 38 0Z" transform="translate(95 -120) rotate(28.6478897565)"/></g>
+    </g>
+    <path d="M-6-175H6v30H-6Z" fill="#1b1430"/>
+    <circle r="150" fill="#ff2846" opacity=".35" filter="url(#glow)"/>
+    <circle r="150" fill="url(#rim)" stroke="#1b1430" stroke-width="6"/>
+    <circle r="132" fill="url(#face)" stroke="#1b1430" stroke-width="4"/>
+    <!-- Canvas ticks inherit round line caps from the leg drawing. -->
+    <g stroke="#1b1430" stroke-linecap="round" fill="none">
+      <g stroke-width="6"><path d="M106 0h18M0 106v18M-106 0h-18M0-106v-18"/></g>
+      <g stroke-width="3">
+        <path id="tick" d="M114 0h10" transform="rotate(30)"/>
+        <path d="M114 0h10" transform="rotate(60)"/><path d="M114 0h10" transform="rotate(120)"/><path d="M114 0h10" transform="rotate(150)"/>
+        <path d="M114 0h10" transform="rotate(210)"/><path d="M114 0h10" transform="rotate(240)"/><path d="M114 0h10" transform="rotate(300)"/><path d="M114 0h10" transform="rotate(330)"/>
+      </g>
+      <path d="M0 0-31-53.693575" stroke-width="12"/>
+      <path d="M0 0V-100" stroke="#c81e3a" stroke-width="7"/>
+    </g>
+    <g stroke="#1b1430" stroke-width="4" fill="#fff"><ellipse cx="-48" cy="-30" rx="24" ry="19"/><ellipse cx="48" cy="-30" rx="24" ry="19"/></g>
+    <g fill="#1b1430"><circle cx="-55" cy="-27" r="9"/><circle cx="41" cy="-27" r="9"/></g>
+    <!-- Preserve the original outward-down eyebrow angles exactly. -->
+    <path d="M-18-66-68-52M18-66 68-52" fill="none" stroke="#1b1430" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cy="62" rx="46" ry="18" fill="#3a0c1c" stroke="#1b1430" stroke-width="4"/>
+    <path d="m-41 48h10l-5 10Zm12 0h10l-5 10Zm12 0h10l-5 10Zm12 0H5L0 58Zm12 0h10l-5 10Zm12 0h10l-5 10Zm12 0h10l-5 10Z" fill="#fff"/>
+  </g>
+</svg>

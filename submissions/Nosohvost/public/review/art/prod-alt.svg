@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">Prod — everything is fine</title>
+  <desc id="desc">An overheating blue server on stomping feet, with uneven rack drawers, alarm eyes and a large curling flame. Optional review artwork.</desc>
+  <g stroke="#1b1430" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M38 45Q23 30 40 14 38 25 48 25 49 14 60 5 58 19 70 23 76 20 77 11 95 25 81 45Z" fill="#f87536"/>
+    <path d="M46 44Q39 35 48 28 51 35 57 35 55 26 63 23 64 33 74 36L70 45Z" fill="#ffda69" stroke="none"/>
+    <path d="M33 99 30 110Q20 114 31 116H48L50 102M69 102 70 114H90Q96 110 83 107L82 98" fill="#303549"/>
+    <path d="M88 65 104 76 102 86M29 67 15 80 20 89" fill="none" stroke-width="5"/>
+    <path d="M28 41 80 36 94 44 92 102 39 109 26 100Z" fill="#576b88"/>
+    <path d="m80 36 14 8-2 58-13-7Z" fill="#2f3c58"/>
+    <path d="M28 41 80 36 79 95 39 109 26 100Z" fill="#4d607c" stroke="none"/>
+    <path d="m29 43 48-4M31 47v10" stroke="#9ab3c6" stroke-width="2.4" fill="none"/>
+    <path d="m35 52 45-5-1 23-44 4Z" fill="#22263d" stroke-width="2.6"/>
+    <path d="M40 56 53 58 51 65 41 65ZM61 57 74 51 73 63 63 65Z" fill="#fff1d4" stroke-width="2"/>
+    <path d="m48 60 1 3m19-6v4" fill="none" stroke="#f64e63" stroke-width="3"/>
+    <path d="m35 79 45-5-1 10-43 6Z" fill="#29364f" stroke-width="2.4"/>
+    <path d="m37 94 40-5-1 10-39 5Z" fill="#29364f" stroke-width="2.4"/>
+    <circle cx="42" cy="83" r="2.2" fill="#81dbb1" stroke="none"/>
+    <circle cx="49" cy="82" r="2.2" fill="#ffc65a" stroke="none"/>
+    <circle cx="44" cy="98" r="2.2" fill="#ff606d" stroke="none"/>
+    <path d="m57 81 15-2m-19 18 15-2" fill="none" stroke="#8193ab" stroke-width="2.3"/>
+    <path d="m84 54 4-1m-4 7 4-1m-4 7 4-1" fill="none" stroke="#8597af" stroke-width="2"/>
+    <path d="m13 39-5-4m10-5-1-6m86 18 7-4" fill="none" stroke="#f6ad4e" stroke-width="2.6"/>
+  </g>
+</svg>

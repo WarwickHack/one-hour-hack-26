@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">Goose — honk first, ask later</title>
+  <desc id="desc">A furious Canada goose with a serpentine neck, flared wing and open black bill. Optional review artwork.</desc>
+  <g stroke="#1b1430" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M37 98 34 109 24 114H47L46 101M62 99 66 108 58 114H82L75 108 73 98" fill="#39343e"/>
+    <path d="M20 77 6 65 9 88 23 95" fill="#46404a"/>
+    <path d="M15 79Q25 66 48 68L66 70Q82 73 85 88 85 106 60 108L37 107Q14 106 12 92 11 85 15 79Z" fill="#9a8b7a"/>
+    <path d="M56 74Q76 75 81 88 80 101 60 104L47 101Z" fill="#e8ddc8" stroke="none"/>
+    <path d="M21 85Q20 65 32 52L39 64 49 60 55 73 68 77Q55 97 33 96Z" fill="#6c625c"/>
+    <path d="M28 81 35 69M36 85 44 75M45 88 53 80" fill="none" stroke="#b6a48d" stroke-width="2.6"/>
+    <path d="M62 75Q77 64 69 49 61 31 72 19L84 25Q77 35 83 47 97 70 77 85Z" fill="#302e39"/>
+    <path d="M70 56Q80 63 77 71" fill="none" stroke="#55505b" stroke-width="2.5"/>
+    <path d="M70 23Q65 14 75 9 89 4 98 15L96 29Q84 37 75 30Z" fill="#302e39"/>
+    <path d="M73 24Q82 29 88 24L94 27Q83 38 75 30Z" fill="#fff6e4" stroke-width="2"/>
+    <path d="M97 16 114 13 110 22 97 23Z" fill="#45404b"/>
+    <path d="m97 27 14 10-17-3Z" fill="#45404b"/>
+    <path d="M98 23 107 25 98 29" fill="#f37480" stroke-width="2"/>
+    <path d="M82 16Q88 13 93 18L91 23Q85 25 82 21Z" fill="#fff9e9" stroke-width="2.3"/>
+    <circle cx="89" cy="20" r="2.6" fill="#d82d48" stroke="none"/>
+    <path d="m80 12 14 5" fill="none" stroke-width="3.5"/>
+    <path d="m103 44 6 5M111 36l5 1M93 43l2 6" fill="none" stroke="#ef785b" stroke-width="2.8"/>
+  </g>
+</svg>

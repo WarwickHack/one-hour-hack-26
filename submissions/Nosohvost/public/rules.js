@@ -4,7 +4,7 @@ document.getElementById('rules-content').innerHTML = `
 <h3>The sequence</h3><p><b>Nouns</b> recruit heroes. <b>Adjectives</b> stack on the next noun. <b>Verbs</b> act through the latest recruited living hero (falling back to the newest survivor). No hero means a wasted verb. Eight heroes fit; a ninth replaces the oldest. Each action finishes before the next one starts.</p>
 <h3>Attack chains</h3><p>Consecutive attack verbs by the same hero build power: <b>1×, 1.5×, 2×, 2.5×…</b>. “COMBO x2” means the second attack, with a 1.5× chain multiplier. Nouns reset the chain; items and adjectives interrupt it. Sleep heals up to 40 HP without incrementing the chain, but counts as a verb for the following attack.</p>
 <h3>Signature moves</h3>${table(['Hero + verb','Extra multiplier'],Object.entries(Engine.SYNERGY).map(([k,v])=>[k,v+'×']))}
-<h3>Adjacent fusions</h3><p>Pairs must be directly adjacent in this order. Fusions are recognized before word roles.</p>${table(['Pair','Effect'],[
+<h3>Fusions</h3><p>Marshall + Wace, Brevan + Howard, and Incident + IO also fuse across the living party, in either order, even with other words between them. The existing partner must still be alive in a slot. Fusion frees its slot, carries its adjectives into the legendary recruit, and restores full legendary HP. Capital + One can find each other while both are pending modifiers. Other pairs below still need direct adjacency in the listed order.</p>${table(['Pair','Effect'],[
 ['rubber duck','Legendary hero; heals everyone 30 HP on arrival.'],
 ['marshall wace / brevan howard / capital one / incident io','Legendary heroes: 2.6 power, 160 HP before adjectives.'],
 ['stack overflow','150 base damage through the current hero, boosted by modifiers and chains.'],

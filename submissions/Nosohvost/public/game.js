@@ -82,7 +82,7 @@ bg.width = W; bg.height = H;
 })();
 
 // ---------- game state ----------
-let battle = null, phase = "loading", time = 0, introT = 0, endT = 0;
+let battle = null, phase = "ready", time = 0, introT = 0, endT = 0;
 let vis = new Map();          // hero id -> visual
 let fx = [];                  // effects
 let bossShown = 0, bossFlash = 0, shake = 0, bossPush = 0, bossLunge = 0;
@@ -102,6 +102,10 @@ function slotHome(k) {
 
 async function newBattle() {
   phase = "loading";
+  document.getElementById("start-gate").hidden = true;
+  Sound.stopAll();
+  await Sound.unlock();
+  Sound.quack();
   let words;
   try { words = await (await fetch("/whack", { cache: "no-store" })).json(); }
   catch { words = ["duck", "quack", "goose", "honk"]; }
@@ -129,6 +133,7 @@ function projectile(pk, x0, y0, x1, y1, dur, onHit, delay = 0, extra = {}) {
 }
 
 function impact(d, tags, color, i = 0) {
+  Sound.cue(d === 0 ? "miss" : tags?.includes("CRIT") ? "critical" : "impact");
   bossShown = Math.max(0, bossShown - d);
   bossFlash = 0.18;
   shake = Math.min(26, Math.max(shake, 5 + d / 10));
@@ -152,26 +157,41 @@ const VERB_FX = {
 function handleEvent(e) {
   switch (e.type) {
     case "join": {
+      Sound.cue(e.hero.legend ? "legend" : "join");
       const home = slotHome(e.hero.slot);
-      const v = { h: e.hero, x: -70 - rand(0, 60), y: home.y, homeX: home.x, homeY: home.y, walkT: 0, facing: 1, flash: 0, dead: false, anim: null, leaving: false, born: time };
+      const v = { h: e.hero, hp: e.hero.maxHp, x: -70 - rand(0, 60), y: home.y, homeX: home.x, homeY: home.y, walkT: 0, facing: 1, flash: 0, dead: false, anim: null, leaving: false, born: time };
       vis.set(e.hero.id, v);
       if (e.hero.legend) floatText(220, GROUND - 40, "LEGENDARY!", C.legend, 34, 1.6);
       break;
     }
-    case "leave": { const v = vis.get(e.hero.id); if (v) { v.leaving = true; v.facing = -1; } break; }
+    case "leave": { Sound.cue("leave"); const v = vis.get(e.hero.id); if (v) { v.leaving = true; v.facing = -1; } break; }
     case "clear": vis.delete(e.hero.id); break;
+    case "health": {
+      const v = vis.get(e.hero.id);
+      if (v) v.hp = e.hp;
+      break;
+    }
+    case "fuse": {
+      const v = vis.get(e.hero.id);
+      if (v) { particle(v.x, v.y-50, C.legend, 32, 240); floatText(v.x, v.y-140, "FUSION!", C.legend, 26, 1.8); }
+      vis.delete(e.hero.id);
+      Sound.cue("legend");
+      break;
+    }
     case "die": {
       const v = vis.get(e.hero.id);
       if (v) {
-        const kill = () => { v.dead = true; particle(v.x, v.y - 50, "#b9b4d6", 20, 220); };
+        const kill = () => { Sound.cue("die"); v.hp = 0; v.dead = true; particle(v.x, v.y - 50, "#b9b4d6", 20, 220); };
         if (v.anim) v.anim.after = kill; else later(kill, 0.3);
       }
       break;
     }
     case "attack": attack(e); break;
     case "bossAttack": {
+      Sound.cue("boss");
       const v = vis.get(e.hero.id);
       if (!v) break;
+      v.hp = Math.max(0, (v.hp ?? v.h.maxHp) - e.dmg);
       bossLunge = 1;
       fx.push({ kind: "bolt", x0: BX - 80, y0: BY + 40, v, life: 0.35, max: 0.35, color: e.enraged ? "#ff2040" : "#ff5d6c", seed: Math.random() });
       v.flash = 0.35;
@@ -180,23 +200,30 @@ function handleEvent(e) {
       break;
     }
     case "healAll": case "sleep": {
+      Sound.cue(e.type === "sleep" ? "sleep" : "heal");
       const targets = e.type === "sleep" ? [vis.get(e.hero.id)] : [...vis.values()].filter((v) => !v.dead && !v.leaving);
+      for (const v of targets) if (v) v.hp = Math.min(v.h.maxHp, (v.hp ?? v.h.maxHp) + e.amount);
       for (const v of targets) if (v) { particle(v.x, v.y - 50, C.item, 10, 120, { grav: -200, shape: "plus", size: 9 }); floatText(v.x, v.y - 125, e.type === "sleep" ? "zzz +" + e.amount : "+" + e.amount, C.item, 20); }
       break;
     }
     case "coffee":
+      Sound.cue("coffee");
       for (const v of vis.values()) if (!v.dead) particle(v.x, v.y - 90, "#c8a27a", 6, 60, { grav: -160, size: 10 });
       floatText(360, GROUND - 60, "CAFFEINATED x1.5", "#c8a27a", 26, 1.4);
       break;
     case "backfire":
+      Sound.cue("conflict");
       shake = 14;
       for (const v of vis.values()) if (!v.dead) { v.flash = 0.4; particle(v.x, v.y - 50, C.backfire, 14, 260); }
       floatText(400, GROUND - 80, "MERGE CONFLICT!", C.backfire, 40, 1.5);
       break;
     case "void":
+      Sound.cue("void");
       floatText(320, GROUND - 60, `${e.tok.text}... *echo*`, C.dim, 24, 1.4);
       break;
     case "token":
+      if (e.tok.kind === "adj") Sound.cue("adj");
+      else Sound.cue("tick");
       if (e.tok.kind === "adj") floatText(250, GROUND - 30, e.tok.text + "...", C.adj, 26, 1.2);
       break;
   }
@@ -210,9 +237,10 @@ function attack(e) {
 
   if (e.verb === "stack overflow") {
     v.anim = { type: "cast", t: 0, dur: 0.6, fromX: v.x, fire: () => {
+      Sound.cue(e.verb);
       e.dmg.forEach((d, i) => {
         for (let b = 0; b < 6; b++) {
-          projectile("block", BX + rand(-90, 50), -60 - b * 70, BX + rand(-70, 30), BY - 40 + b * 4, 0.55, b === 5 ? () => hit(d, i) : () => { shake = Math.max(shake, 6); particle(BX - 20, BY - 80, C.ult, 5, 160); }, b * 0.09 + i * 0.4, { hue: 260 + b * 12 });
+          projectile("block", BX + rand(-90, 50), -60 - b * 70, BX + rand(-70, 30), BY - 40 + b * 4, 0.55, b === 5 ? () => hit(d, i) : () => { Sound.cue("block"); shake = Math.max(shake, 6); particle(BX - 20, BY - 80, C.ult, 5, 160); }, b * 0.09 + i * 0.4, { hue: 260 + b * 12 });
         }
       });
     } };
@@ -220,6 +248,7 @@ function attack(e) {
   }
   if (MELEE.has(e.verb)) {
     v.anim = { type: "dash", t: 0, dur: e.verb === "crash" ? 0.5 : 0.62, fromX: v.x, toX: BX - 215, fire: () => {
+      Sound.cue(e.verb);
       if (e.verb === "whack") fx.push({ kind: "hammer", x: BX - 150, y: BY - 10, life: 0.35, max: 0.35 });
       if (e.verb === "crash") { particle(BX - 120, BY, C.crash, 50, 500); floatText(BX - 120, BY - 120, "SEGMENTATION... no, NULL POINTER", C.crash, 20, 1.6); }
       e.dmg.forEach((d, i) => later(() => hit(d, i), i * 0.35));
@@ -228,6 +257,7 @@ function attack(e) {
   }
   const f = VERB_FX[e.verb] || { pk: "orb", color };
   v.anim = { type: "cast", t: 0, dur: 0.5, fromX: v.x, fire: () => {
+    Sound.cue(e.verb);
     const s = spriteScale(v);
     const x0 = v.x + 40 * s, y0 = v.y - 60 * s;
     e.dmg.forEach((d, i) => {
@@ -257,13 +287,13 @@ function update(dt) {
         if (e.type === "token") actionLabel.textContent = `${e.tok.text} · ${Engine.KIND_LABEL[e.tok.kind]}`;
         else if (e.type === "attack") actionLabel.textContent = `${e.hero.name} uses ${e.verb.toUpperCase()}${e.tags.length ? " · " + e.tags.join(" · ") : ""}`;
         else if (e.type === "bossAttack") actionLabel.textContent = `THE DEADLINE retaliates against ${e.hero.name}`;
-        actionWait = e.type === "token" ? 0.45 : e.type === "end" ? 0 : 0.7;
+        actionWait = e.type === "token" ? 0.45 : ["end", "health"].includes(e.type) ? 0 : 0.7;
       } else if (actionWait === 0 && !battle.done) {
         eventQueue = battle.step();
         actionWait = STEP_TIME;
       } else if (actionWait === 0 && battle.done && !eventQueue.length) {
         endT += dt;
-        if (endT > 1.4) { phase = "end"; endT = 0; if (battle.won) confetti(); }
+        if (endT > 1.4) { phase = "end"; endT = 0; Sound.cue(battle.won ? "win" : "lose"); if (battle.won) confetti(); }
       }
     }
   }
@@ -285,7 +315,11 @@ function update(dt) {
     const target = v.leaving ? -200 : v.homeX;
     const dx = target - v.x;
     v.moving = Math.abs(dx) > 2;
-    if (v.moving) { v.x += Math.sign(dx) * Math.min(Math.abs(dx), 210 * dt); v.walkT += dt; }
+    if (v.moving) {
+      v.x += Math.sign(dx) * Math.min(Math.abs(dx), 210 * dt);
+      if (Math.floor((v.walkT + dt) / .28) > Math.floor(v.walkT / .28)) Sound.cue("step");
+      v.walkT += dt;
+    }
     if (v.leaving && v.x < -150) vis.delete(v.h.id);
   }
 
@@ -360,7 +394,8 @@ function drawHero(v) {
   text(base, v.x, top - 16, { size: base.length > 14 ? 10 : 12, color: h.legend ? C.legend : C.text });
   const bw = 64;
   rr(v.x - bw / 2, top - 6, bw, 7, 4); ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fill();
-  rr(v.x - bw / 2, top - 6, bw * (h.hp / h.maxHp), 7, 4); ctx.fillStyle = h.hp / h.maxHp > 0.35 ? C.item : C.boss; ctx.fill();
+  const health = (v.hp ?? h.maxHp) / h.maxHp;
+  rr(v.x - bw / 2, top - 6, bw * health, 7, 4); ctx.fillStyle = health > 0.35 ? C.item : C.boss; ctx.fill();
 }
 
 // Placeholder creature for nouns that don't have an SVG sprite yet.
@@ -675,8 +710,17 @@ document.querySelectorAll("[data-speed]").forEach(button => button.addEventListe
 }));
 document.getElementById("restart").addEventListener("click", () => { if (phase !== "loading") newBattle(); });
 const ruleDialog = document.getElementById("rules");
-document.getElementById("show-rules").addEventListener("click", () => { paused = true; fast = false; ruleDialog.showModal(); });
+document.getElementById("show-rules").addEventListener("click", () => { paused = true; fast = false; Sound.pause(true); ruleDialog.showModal(); });
 document.getElementById("close-rules").addEventListener("click", () => ruleDialog.close());
 ruleDialog.addEventListener("close", () => { paused = false; last = performance.now(); });
-newBattle();
+document.getElementById("start-battle").addEventListener("click", () => { if (phase === "ready") newBattle(); });
+const soundToggle = document.getElementById("sound-toggle");
+let soundEnabled = true;
+soundToggle.addEventListener("click", async () => {
+  soundEnabled = !soundEnabled; Sound.setEnabled(soundEnabled);
+  soundToggle.textContent = soundEnabled ? "Sound on" : "Sound off";
+  soundToggle.setAttribute("aria-pressed", String(soundEnabled));
+  if (soundEnabled) { await Sound.unlock(); Sound.cue("commit"); }
+});
+document.getElementById("volume").addEventListener("input", e => Sound.setVolume(Number(e.target.value) / 100));
 requestAnimationFrame(frame);

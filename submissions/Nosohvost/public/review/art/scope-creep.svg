@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320" role="img" aria-labelledby="title desc">
+  <title id="title">Scope Creep — just one more feature</title>
+  <desc id="desc">Optional alternate boss: a lumbering monster made of specification pages, binder clip horns, sticky notes and red revision marks. Torn paper teeth, folded claws and multiplying requests turn the project itself into the enemy. Transparent background.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff6d9"/><stop offset="1" stop-color="#e2cca9"/></linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dfc9a6"/><stop offset="1" stop-color="#ae9386"/></linearGradient>
+  </defs>
+  <g stroke="#1b1430" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Accordion-fold limbs keep the silhouette recognisable without labels. -->
+    <path d="m103 242-10 23 7 12-24 12 6 10 46-6 9-47Z" fill="#bdb1b5"/>
+    <path d="m187 246 9 23-4 13 21 14 39 1-3-12-22-12-3-30Z" fill="#bdb1b5"/>
+    <path d="m96 265 26 7m-22 5 19 4m78-12 21 3m-24 10 24 1" fill="none" stroke="#79687d" stroke-width="2.7"/>
+    <path d="M83 124 51 139 37 162 18 158 8 172 24 177 17 188 39 183 57 161 89 159Z" fill="#e6d5b7"/>
+    <path d="m51 139 7 14-10 15m-17-5-7 14" fill="none" stroke="#a98e7b" stroke-width="3"/>
+    <path d="m233 130 32-10 19 17 15-8 11 13-14 7 9 12-20-3-21-17-27 27Z" fill="#e6d5b7"/>
+    <path d="m265 120-6 18 12 12m13-13 12 12" fill="none" stroke="#a98e7b" stroke-width="3"/>
+    <!-- Three competing specifications, each visibly outgrowing the previous one. -->
+    <path d="m85 69 140-26 24 44 7 153-169 25-20-38Z" fill="#af93ae"/>
+    <path d="m67 80 153-23 27 30-4 162-160 13-18-18Z" fill="#d7bca5"/>
+    <path d="m78 66 133 2 29 31-4 147-22 19-17-10-19 12-20-11-19 12-19-11-21 8-20-15Z" fill="url(#paper)" stroke-width="5"/>
+    <path d="m211 68-1 37 30-6Z" fill="url(#fold)" stroke-width="3.5"/>
+    <path d="m87 76 112 2m-110 7 69 1" fill="none" stroke="#fffdf0" stroke-width="3"/>
+    <!-- Binder clips read as little horns. -->
+    <path d="m94 68-3-16 29-4 4 21Z" fill="#4c405d" stroke-width="3.5"/>
+    <path d="m96 52-6-16q-5-17 5-20 10-3 14 12l5 22m-15 1-4-17q-2-8 1-9 4-1 6 8l5 17" fill="none" stroke="#9c91aa" stroke-width="3"/>
+    <path d="m174 69 3-20 29 4-3 17Z" fill="#4c405d" stroke-width="3.5"/>
+    <path d="m181 48 4-16q5-17 15-13 10 3 5 18l-5 15m-13-3 6-17q3-7 5-6 3 1 0 10l-5 14" fill="none" stroke="#9c91aa" stroke-width="3"/>
+    <!-- Revision rules, unchecked checkboxes and a tiny impossible addendum. -->
+    <g fill="none" stroke="#b3a199" stroke-width="2.4">
+      <path d="M92 95h27m-27 8h58M92 225h23m-22 8h38m47 0h24M89 181h18m103 1h14"/>
+    </g>
+    <path d="m100 119 36 14-4 25-27-4Z" fill="#fffdf0" stroke-width="3.5"/>
+    <path d="m176 132 41-16-3 36-32 8Z" fill="#fffdf0" stroke-width="3.5"/>
+    <path d="m116 137-2 13m78-14-2 13" fill="none" stroke="#7d3b55" stroke-width="7"/>
+    <path d="m97 113 43 14-7-10m41 9 44-15-4 10" fill="none" stroke-width="6"/>
+    <path d="m109 178 13-7 16 8 20-10 16 9 18-11 17 10 10-2-6 30-17 13-22-4-16 8-21-10-18 1-15-16Z" fill="#492f4c" stroke-width="3.7"/>
+    <path d="m110 178 12-7 16 8 20-10 16 9 18-11 17 10 10-2-9 15-14-5-12 15-12-13-15 15-13-12-12 10-7-14-9 5Z" fill="#fff8df" stroke-width="2.2"/>
+    <path d="m126 212 10-11 12 12 12-9 14 10 12-11 10 15-22-4-16 8-21-10Z" fill="#e8d6b7" stroke-width="2.2"/>
+    <path d="m89 163 7 3m124-5 6-3m-69-14-6 17 10 1" fill="none" stroke="#b29985" stroke-width="2.5"/>
+    <g fill="none" stroke="#ca5b66" stroke-width="2.8">
+      <path d="m88 203 11-6m-10 11 11-5M124 97l27 2m-10-7 12 7-10 6m48 120 27 3m-8-7 9 7-9 5"/>
+      <path d="m91 218 5 5 8-11"/>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0;1 -2;0 0" dur="3.2s" repeatCount="indefinite"/>
+      <path d="m236 72 38 7-6 41-34-10Z" fill="#f1a8b5" stroke-width="3"/>
+      <path d="m254 91-2 11m-5-7 12 2" fill="none" stroke="#8b4866" stroke-width="2.8"/>
+      <path d="m234 110 12-7-2 10Z" fill="#c97b95" stroke-width="2"/>
+    </g>
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="0 71 105;-3 71 105;0 71 105" dur="3.8s" repeatCount="indefinite"/>
+      <path d="m43 78 35-5 5 39-34 4Z" fill="#f7d46f" stroke-width="3"/>
+      <path d="m53 88 15-2m-13 9 17-2m-16 9 10-2" fill="none" stroke="#a47a4e" stroke-width="2.3"/>
+    </g>
+    <path d="m218 247 30-6 6 31-29 4Z" fill="#b1d6bb" stroke-width="3"/>
+    <path d="m228 257 15-3m-13 10 11-2" fill="none" stroke="#648577" stroke-width="2.3"/>
+    <path d="m277 90 6-4m-10-4 2-7M39 119l-7 2" fill="none" stroke="#cc849d" stroke-width="2.8"/>
+  </g>
+</svg>

@@ -15,6 +15,14 @@
     "merge conflict": "backfire",
     "null pointer": "crash",
   };
+  const PARTY_FUSIONS = {
+    marshall: { partner: "wace", key: "marshall wace" },
+    wace: { partner: "marshall", key: "marshall wace" },
+    brevan: { partner: "howard", key: "brevan howard" },
+    howard: { partner: "brevan", key: "brevan howard" },
+    incident: { partner: "io", key: "incident io" },
+    io: { partner: "incident", key: "incident io" },
+  };
   const KIND_LABEL = {
     noun: "NOUN", verb: "VERB", adj: "ADJECTIVE", item: "ITEM",
     legend: "LEGENDARY", ult: "ULTIMATE", backfire: "BACKFIRE", crash: "EXCEPTION",
@@ -131,6 +139,7 @@
     hurtHero(h, d, ev) {
       if (h.hp <= 0) return;
       h.hp = Math.max(0, h.hp - d);
+      ev.push({ type: "health", hero: h, hp: h.hp });
       if (h.hp <= 0) {
         ev.push({ type: "die", hero: h });
         this.log(`${h.name} has been garbage collected.`, "dim");
@@ -141,7 +150,16 @@
     step() {
       const ev = [];
       if (this.done) return ev;
-      const tok = this.tokens[this.i++];
+      let tok = this.tokens[this.i++];
+      // Capital and One are modifiers rather than recruits. They can find each
+      // other while still pending, even with unrelated words between them.
+      if (tok.kind === "adj" && (tok.key === "capital" || tok.key === "one")) {
+        const partner = this.pendingAdj.indexOf(tok.key === "capital" ? "one" : "capital");
+        if (partner >= 0) {
+          this.pendingAdj.splice(partner, 1);
+          tok = {text:"CAPITAL ONE", key:"capital one", kind:"legend"};
+        }
+      }
       ev.push({ type: "token", tok });
       switch (tok.kind) {
         case "adj":
@@ -149,12 +167,20 @@
           this.log(`${tok.text}... (waiting for a noun)`, "adj");
           break;
         case "noun": case "legend": case "crash": {
-          const h = this.makeHero(tok, this.pendingAdj);
+          const recipe = tok.kind === "noun" ? PARTY_FUSIONS[tok.key] : null;
+          const partner = recipe ? this.alive().filter(h => h.key === recipe.partner).sort((a,b) => a.id-b.id)[0] : null;
+          const recruitTok = partner ? {text:recipe.key.toUpperCase(),key:recipe.key,kind:"legend"} : tok;
+          const h = this.makeHero(recruitTok, partner ? [...partner.adjs, ...this.pendingAdj] : this.pendingAdj);
+          if (partner) {
+            this.slots[partner.slot] = null;
+            ev.push({type:"fuse",hero:partner,into:h});
+            this.log(`${partner.name} and ${tok.text} fuse into ${h.name}!`,"legend");
+          }
           this.pendingAdj = [];
           this.recruit(h, ev);
           this.lastActor = h;
           this.combo = 0;
-          if (tok.kind === "legend") this.log(`LEGENDARY ${h.name} joins the party!`, "legend");
+          if (recruitTok.kind === "legend") this.log(`LEGENDARY ${h.name} joins the party!`, "legend");
           else this.log(`${h.name} joins the party.`, "noun");
           if (tok.key === "rubber duck") {
             this.healAll(30);
@@ -264,7 +290,7 @@
   }
 
   const HERO_KEYS = ["duck", "goose", "bug", "feature", "oculus", "compsoc", "marshall", "wace", "brevan", "howard", "bloomberg", "netcraft", "incident", "io", "prod", "segfault", "pointer", "stack", "semicolon", "demo", "prize", "wifi", "rubber duck", "marshall wace", "brevan howard", "capital one", "incident io", "null pointer"];
-  const Engine = { Battle, tokenize, KIND_LABEL, BOSS_HP, HERO_KEYS, SYNERGY, FUSIONS };
+  const Engine = { Battle, tokenize, KIND_LABEL, BOSS_HP, HERO_KEYS, SYNERGY, FUSIONS, PARTY_FUSIONS };
   if (typeof module !== "undefined" && module.exports) module.exports = Engine;
   else root.Engine = Engine;
 })(typeof window !== "undefined" ? window : globalThis);

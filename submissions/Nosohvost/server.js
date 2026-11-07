@@ -14,6 +14,7 @@ const TYPES = {
   ".svg": "image/svg+xml",
   ".css": "text/css",
   ".png": "image/png",
+  ".mp3": "audio/mpeg",
 };
 const PORT = Number(process.env.PORT) || 3000;
 

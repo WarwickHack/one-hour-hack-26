@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">Rubber duck — emotional support debugger</title>
+  <desc id="desc">A smiling golden bath toy with a curled tuft, plump seamless silhouette, raised wing and warm reflected highlights. Optional review artwork.</desc>
+  <g stroke="#1b1430" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M52 61Q44 51 48 35 50 17 69 15 90 12 97 31 102 44 94 57L87 66Q104 65 106 77 109 96 88 108 69 117 41 112 14 109 11 89 9 78 6 70 17 72 23 80 31 66 52 61Z" fill="#ffd34c"/>
+    <path d="M16 89Q26 107 52 106 88 108 103 83 100 102 81 109 56 117 32 108 17 104 16 89Z" fill="#efad32" stroke="none"/>
+    <path d="M51 48Q55 58 65 60" fill="none" stroke="#e8aa32" stroke-width="3"/>
+    <path d="M31 80Q45 69 65 79 59 95 42 94 35 91 31 80Z" fill="#f2b837"/>
+    <path d="M39 81Q48 77 55 81" fill="none" stroke="#ffe998" stroke-width="2.5"/>
+    <path d="M92 37Q103 32 114 41L112 49Q102 55 91 48Z" fill="#f58a39"/>
+    <path d="M95 44Q103 47 112 43" fill="none" stroke-width="2.3"/>
+    <ellipse cx="79" cy="34" rx="5.8" ry="7.1" fill="#1b1430" stroke="none"/>
+    <circle cx="81" cy="31" r="2" fill="#fff" stroke="none"/>
+    <path d="M72 22Q79 19 85 24" fill="none" stroke-width="2.5"/>
+    <ellipse cx="83" cy="47" rx="5.4" ry="3.2" fill="#ef9b4a" stroke="none"/>
+    <path d="M65 16Q56 11 63 5 62 11 72 10" fill="#ffd34c" stroke-width="3"/>
+    <path d="M57 34Q58 25 65 25" fill="none" stroke="#fff3b3" stroke-width="4.5"/>
+    <path d="M24 88Q25 79 29 77" fill="none" stroke="#fff3b3" stroke-width="3.5"/>
+    <path d="M45 104Q59 108 74 104" fill="none" stroke="#ffe589" stroke-width="2.6"/>
+  </g>
+</svg>
