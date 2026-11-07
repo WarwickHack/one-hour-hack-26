@@ -267,7 +267,7 @@ def prune(prog, target):
     return [prog[k] for k in keep], keep
 
 
-def evolve(target_text, rng=None, pop_size=40, elite=10, stall_limit=700):
+def evolve(target_text, rng=None, pop_size=40, elite=10, stall_limit=700, time_limit=60):
     """Breeds a program that prints target_text. Yields an event every generation."""
     rng = rng or WhackRandom()
     target = target_text.encode("latin-1")
@@ -303,6 +303,9 @@ def evolve(target_text, rng=None, pop_size=40, elite=10, stall_limit=700):
             _, ending, steps = run(pruned, trace=trace)
             yield {**base, "type": "done", "before": champ, "keep": keep, "program": pruned,
                    "trace": trace, "ending": ending, "steps": steps}
+            return
+        if base["elapsed"] > time_limit:    # hard cap: give up after 60 seconds
+            yield {**base, "type": "gaveup", "out": out}
             return
         yield {**base, "type": "gen", "score": score, "max": 1000 * len(target) + 256, "out": out,
                "target": target, "champ": champ, "ranked": ranked, "rain": rng.last, "improved": improved}
@@ -431,6 +434,9 @@ def breed_cli(target):
     finally:
         if TTY:
             sys.stdout.write("\x1b[?25h\x1b[2J\x1b[H")
+    if ev["type"] == "gaveup":
+        print(f"Gave up after {ev['elapsed']:.0f}s and {ev['gen']:,} generations. Best output: {show(ev['out'])!r}")
+        return
     out = bytes(ev["trace"][-1]["out"]) if ev["trace"] else b""
     print(bold(f"Bred a program that prints {target!r}") + f" in {ev['gen']:,} generations and {ev['elapsed']:.1f}s.")
     print(f"whack() was called {ev['calls']:,} times: {ev['genes']:,} for genetic material, {ev['dice']:,} for dice.\n")

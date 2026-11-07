@@ -338,6 +338,10 @@ function breed(target) {
     } else if (ev.type === "restart") {
       S.restarts.push(ev.gen);
       status(`Stuck on <b>${text(ev.stuck_on)}</b>. Honk! The goose scatters the flock: restart ${ev.restarts} from fresh whacks.`);
+    } else if (ev.type === "gaveup") {
+      es.close(); es = null;
+      counters(ev);
+      status(`Gave up after 60 seconds. Best output: <b>${text(ev.out)}</b>. Try again: every run uses fresh whacks.`, true);
     } else if (ev.type === "done") {
       es.close(); es = null;
       counters(ev);
