@@ -963,7 +963,6 @@ export class Pond {
       d.foodTarget = null;
       d.bugTarget = null;
     }
-    this.addEffect(this.delay(1.0, () => this.floatText("STACK OVERFLOW", new THREE.Vector3(base.x, height * 1.05 + 3, base.z), "#7df9ff", 9, 2.2)));
     log(65, `🥞 stack overflow: ${height} ducks stacked to height ${height}… then it toppled`);
   }
 
