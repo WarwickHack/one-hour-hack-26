@@ -415,6 +415,7 @@ export class Pond {
   }
 
   textOver(e, text, color, size = 4, life = 1.6) {
+    if (!["HONK!", "HONK", "CHOMP", "BONK"].includes(text)) return;
     const p = e.group.position.clone();
     p.y += 1.6 * e.baseScale * 0.8 + 0.5;
     this.floatText(text, p, color, size, life);
@@ -778,7 +779,6 @@ export class Pond {
       log(50, `🎉 ${desc} — confetti over the lake`);
       if (c("prize") && this.ducks.length) {
         const champ = this.ducks.reduce((a, b) => (b.meals > a.meals ? b : a));
-        this.textOver(champ, "🏆 WINNER", "#ffd700", 5, 2.5);
         const why = champ.meals ? ` (${plural(champ.meals, "snack", "snacks")} eaten)` : "";
         log(52, `🏆 prize: ${champ.name}${why} wins Best Use of whack()`);
       }
