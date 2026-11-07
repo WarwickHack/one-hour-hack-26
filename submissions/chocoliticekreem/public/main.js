@@ -48,6 +48,21 @@ addEventListener("resize", () => {
   renderer.setSize(innerWidth, innerHeight);
 });
 
+const W_TEXTURE = (() => {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d");
+  ctx.font = "900 112px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#3b1a5a";
+  ctx.fillText("W", 64, 70);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+})();
+const PLAYER_PURPLE = 0xcdb6ff;
+
 function buildPlayerDuck(bodyColor = 0xfaf7ef) {
   const g = new THREE.Group();
   const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.55 });
@@ -78,6 +93,14 @@ function buildPlayerDuck(bodyColor = 0xfaf7ef) {
   shield.visible = false;
   [body, tail, wingL, wingR, head, beak, eyeL, eyeR, scarf].forEach((m) => { m.castShadow = true; g.add(m); });
   g.add(shield);
+  const back = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.95, 0.95),
+    new THREE.MeshBasicMaterial({ map: W_TEXTURE, transparent: true, depthWrite: false }),
+  );
+  back.material.userData.outlineParameters = { visible: false };
+  back.rotation.set(-Math.PI / 2, 0, Math.PI);
+  back.position.set(0, 1.135, -0.2);
+  g.add(back);
   g.userData = { shield, head };
   return g;
 }
@@ -92,7 +115,7 @@ barrier.scale.set(world.lake.radiusX * BARRIER, 1, world.lake.radiusZ * BARRIER)
 barrier.position.y = 2.5;
 scene.add(barrier);
 
-const duck = buildPlayerDuck(0xfff4cf);
+const duck = buildPlayerDuck(PLAYER_PURPLE);
 duck.scale.setScalar(1.2);
 duck.position.set(0, world.lake.waterY, world.lake.radiusZ * 0.5);
 scene.add(duck);
@@ -347,7 +370,7 @@ const ghosts = new Map();
 function onPos(p) {
   let g = ghosts.get(p.id);
   if (!g) {
-    g = buildPlayerDuck(0xbfe3ff);
+    g = buildPlayerDuck(PLAYER_PURPLE);
     g.add(nameTag(p.name));
     scene.add(g);
     ghosts.set(p.id, g);
