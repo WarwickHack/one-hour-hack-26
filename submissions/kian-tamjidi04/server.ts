@@ -6,41 +6,6 @@ import { CATEGORIES, CATEGORY_OF, NEUTRAL } from "./categories.ts";
 // whack() writes ./whack relative to the working directory; keep it next to this file.
 process.chdir(import.meta.dir);
 
-const KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = "claude-sonnet-5-5";
-const PROMPT =
-  "You are a Rorschach examiner. Look at this symmetric inkblot and say what you see in one or two short sentences, " +
-  "in the voice of a dry, slightly worried clinician. Mention a shape and what it suggests about the patient. No preamble.";
-
-// Ask Claude what it sees in the blot. Only the image is sent, never the words.
-async function readBlot(png: string): Promise<string | null> {
-  if (!KEY || !png.startsWith("data:image/png;base64,")) return null;
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal: AbortSignal.timeout(10_000),
-      headers: { "content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 160,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: "image/png", data: png.slice(png.indexOf(",") + 1) } },
-            { type: "text", text: PROMPT },
-          ],
-        }],
-      }),
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
-    const text = data.content?.find(c => c.type === "text")?.text?.trim();
-    return text || null;
-  } catch {
-    return null;
-  }
-}
-
 const MAX_BODY = 2_000_000;
 const ALLOWED_HOSTS = new Set(["localhost:3000", "127.0.0.1:3000"]);
 const ALLOWED_ORIGINS = new Set([...ALLOWED_HOSTS].map(h => `http://${h}`));

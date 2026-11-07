@@ -85,6 +85,13 @@ button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 .l svg { width: 18px; height: 18px; }
 .l.gap { width: 18px; border-left: 1px dashed var(--rule); margin-left: 8px; background: none; border-top: 0; padding: 0; }
 .note { margin: 0; color: var(--ink-soft); font-size: .92rem; max-width: 72ch; }
+.example { border-left: 3px solid var(--c-bird); background: var(--card); padding: 10px 12px; max-width: 82ch; }
+.example > span { display: block; margin-bottom: 4px; font: 700 .72rem var(--f-type); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.example p { margin: 0; }
+.example code, .mechanics code { font-family: var(--f-type); }
+.mechanics { background: var(--card); border: 1px solid var(--rule); padding: 9px 11px; max-width: 82ch; }
+.mechanics summary { cursor: pointer; font: 700 .72rem var(--f-type); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.mechanics ul { display: grid; gap: 5px; margin: 9px 0 2px; padding-left: 1.3rem; }
 
 .history { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .mini { background: var(--card); border: 1px solid var(--rule); border-radius: 2px; padding: 6px; display: grid; gap: 4px; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; }
@@ -97,33 +104,39 @@ button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
   <header>
     <span class="eyebrow">Case file · WHACK 26 · 42-word vocabulary · 1–100 words per call</span>
     <h1>Whackschach</h1>
-    <p class="lede">Each call to <code>whack()</code> becomes an inkblot. Every letter steers a pen: its ASCII code sets how far the pen turns and how far it moves. Each word ends in a drop of ink sized by its length. The result is mirrored down the middle, and an examiner reports what they see.</p>
+    <p class="lede">A random word list becomes a mirrored inkblot, one letter at a time.</p>
   </header>
 
   <section class="session">
     <div class="plate"><canvas id="blot" aria-label="Inkblot drawn from the latest call"></canvas><span class="no" id="plateno">PLATE I</span></div>
     <div class="notes" aria-live="polite">
       <div class="buttons">
-        <button id="go" type="button">Call whack()</button>
+        <button id="go" type="button">Generate new inkblot</button>
         <button id="shuffle" type="button">Same words, new order</button>
       </div>
       <p class="error" id="err" hidden></p>
-      <div class="field"><span>Patient output</span><div class="words" id="words"></div></div>
+      <div class="field"><span>Words returned</span><div class="words" id="words"></div></div>
       <div class="stats">
         <div><b id="sN">–</b><small>words</small></div>
         <div><b id="sL">–</b><small>letters</small></div>
-        <div><b id="sS">–</b><small>ascii Σ</small></div>
+        <div><b id="sS">–</b><small>ASCII sum</small></div>
         <div><b id="sT">–</b><small>net turn</small></div>
       </div>
-      <div class="field"><span>Examiner's reading</span><p class="reading" id="reading"></p></div>
+      <div class="field"><span>Inkblot reading</span><p class="reading" id="reading"></p></div>
       <p class="stub" id="stub">Stand-in examiner, reading the blot's shape and inks.</p>
-      <div class="field"><span>Patient transcript · ./whack</span><pre class="transcript" id="file"></pre><small class="check" id="check"></small></div>
+      <div class="field"><span>File written · ./whack</span><pre class="transcript" id="file"></pre><small class="check" id="check"></small></div>
     </div>
   </section>
 
   <section class="field">
     <h2>Letter tape</h2>
-    <p class="note">How the pen moved. Each letter turns it by (code − 109.5) × 6 degrees, so <span class="type">a</span> curls hard left and <span class="type">z</span> hard right, and steps it forward by 6 + 2 × (code mod 7). Before each word the heading swings by the word's ASCII sum mod 360. The tape is the instructions, one tile per letter in reading order. The blot is the result: the same moves in bleeding ink, each word ending in a splat, then mirrored so overlapping strokes merge into one shape.</p>
+    <p class="note">Each tile shows a letter's ASCII code and turn. Read left to right: the letters steer the pen, each word's category sets its ink, and a splat marks its end. The path is mirrored across the fold.</p>
+    <div class="example"><span>Worked example · <code>duck</code></span><p><code>duck</code> is bird-category ink. Its letter codes sum to 423, so the pen first turns +63° (423 mod 360). Then <code>d</code>, <code>u</code>, <code>c</code>, <code>k</code> turn −57°, +45°, −63°, −15° and move 10, 16, 8, 10 units. The word ends with an ink splat.</p></div>
+    <details class="mechanics"><summary>Exact drawing rules</summary><ul>
+      <li>Before each word, turn by the sum of its letter codes modulo 360°.</li>
+      <li>For a letter with code <code>c</code>: turn by <code>(c − 109.5) × 6°</code>, move <code>6 + 2 × (c mod 7)</code> units, and use stroke width <code>2 + (c mod 5)</code>.</li>
+      <li>At each word's end, add a category-colored splat. Fit the path to half the plate and thin the ink on longer calls.</li>
+    </ul></details>
     <div class="cats" id="cats"></div>
     <div class="tapebox"><div class="tape" id="tape"></div></div>
   </section>
