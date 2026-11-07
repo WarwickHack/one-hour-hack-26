@@ -2,7 +2,7 @@
 
 **By:** Anson (GitHub: chocoliticekreem)
 
-**Pitch:** You're a duck on Lake Woxbridge. Every word `whack()` writes spawns something on the lake. Survive till midnight, and throw your own `whack()` at other ducks.
+**Pitch:** You are a whacky quacky duck on Lake Woxbridge, by the Oculus. Every word `whack()` writes spawns something on the lake, and you can aim your own `whack()` at other ducks.
 
 **Play online, no sign-up:** https://whackquack.vercel.app
 
