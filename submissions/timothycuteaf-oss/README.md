@@ -11,6 +11,7 @@ cd submissions/timothycuteaf-oss
 python evolve.py                     # evolve a duck, 20k whack() calls, takes about 10s
 python evolve.py --hatch duck.dna    # regrow the duck from its DNA
 python evolve.py --target goose.txt  # evolve a goose instead
+python evolve.py --target WHACK.txt 40000  # evolve the word WHACK out of whack() words
 ```
 
 Python 3.9+ and nothing to install. It also writes `evolution.gif`, `fossil_record.png` and `duck.dna`. I hand rolled the GIF and PNG encoders because I didn't want anyone pip installing stuff at midnight.
@@ -22,6 +23,10 @@ Python 3.9+ and nothing to install. It also writes `evolution.gif`, `fossil_reco
 Here's the fossil record after 30, 150, 600, 2,000 and 20,000 whack() calls:
 
 ![fossil record](fossil_record.png)
+
+It can spell WHACK too. Yeah, it evolves the word WHACK out of whack() words, which is a bit meta:
+
+![WHACK](WHACK_fossil_record.png)
 
 ## How it works
 
