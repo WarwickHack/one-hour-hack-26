@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Warwick Quack Soc Social</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header id="top">
+    <div id="title">LAKE WOXBRIDGE</div>
+    <div id="hp"></div>
+    <div id="score"></div>
+    <div id="mycd" hidden></div>
+    <div id="goal">survive till 00:00</div>
+    <div id="clock">22:30</div>
+  </header>
+
+  <aside id="file-panel">
+    <div class="panel-head" id="file-head">whack()</div>
+    <pre id="file"></pre>
+  </aside>
+
+  <div id="next"><div id="next-bar"></div><span>server whack()</span></div>
+  <aside id="live" hidden></aside>
+  <div id="toasts"></div>
+  <div id="effects"></div>
+  <div id="outcome" hidden></div>
+  <div id="nudge" hidden>Press <b>SPACE</b> to whack() a duck</div>
+
+  <footer id="controls">
+    <button id="whack-btn">WHACK()</button>
+    <span class="hint">green = grab · red = run · logos = +50 · SPACE = whack() a duck</span>
+  </footer>
+
+  <div id="ticker" hidden></div>
+  <div id="flash"></div>
+  <div id="banner"></div>
+
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+  <script type="module" src="main.js"></script>
+  <script src="touch.js"></script>
+</body>
+</html>
