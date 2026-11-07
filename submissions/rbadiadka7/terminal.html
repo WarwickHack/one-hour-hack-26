@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WHACK Exchange</title>
+<style>
+  :root {
+    --bg: #000; --panel: #0a0a0a; --line: #2a2a2a; --amber: #ffa028; --dim: #8a6a3a;
+    --text: #e8e8e8; --up: #2fe07a; --down: #ff4b4b; --blue: #4fb3ff; --head: #1a1208;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.35 "SF Mono", Menlo, Consolas, monospace; }
+  body { display: grid; grid-template-rows: auto auto 1fr auto; height: 100vh; overflow: hidden; }
+  header { display: flex; align-items: center; gap: 18px; padding: 6px 12px;
+    background: var(--amber); color: #000; font-weight: 700; }
+  header .logo { font-size: 16px; letter-spacing: 2px; }
+  header .sp { flex: 1; }
+  header button { font: inherit; background: #000; color: var(--amber); border: 0; padding: 4px 12px; cursor: pointer; }
+  .ticker { white-space: nowrap; overflow: hidden; border-bottom: 1px solid var(--line); background: var(--head); padding: 4px 0; }
+  .ticker span.run { display: inline-block; animation: scroll 40s linear infinite; }
+  @keyframes scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+  .ticker b { color: var(--amber); margin-left: 22px; }
+  main { display: grid; grid-template-columns: 360px 1fr 380px; gap: 1px; background: var(--line); min-height: 0; }
+  section { background: var(--panel); min-height: 0; display: flex; flex-direction: column; }
+  h2 { margin: 0; padding: 5px 10px; font-size: 12px; color: #000; background: var(--dim); letter-spacing: 1px; }
+  h2 em { float: right; font-style: normal; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 3px 8px; border-bottom: 1px solid #151515; }
+  tr { cursor: pointer; }
+  tr.sel td { background: #241a08; }
+  td.sym { color: var(--amber); font-weight: 700; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .up { color: var(--up); } .down { color: var(--down); }
+  .flash-up td { animation: fu .8s; } .flash-down td { animation: fd .8s; }
+  @keyframes fu { from { background: #0e4d2a } } @keyframes fd { from { background: #5a1414 } }
+  .scroll { overflow: auto; flex: 1; }
+  .chartwrap { flex: 1; position: relative; min-height: 0; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .bigq { padding: 10px 12px 2px; display: flex; align-items: baseline; gap: 14px; }
+  .bigq .s { color: var(--amber); font-size: 26px; font-weight: 700; }
+  .bigq .p { font-size: 26px; }
+  .bigq .n { color: #999; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); height: 38%; }
+  .row2 > div { background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  .news div { padding: 4px 10px; border-bottom: 1px solid #151515; }
+  .news .t { color: #666; margin-right: 6px; }
+  .news .crash { color: #fff; background: #5a1414; }
+  .news .up { color: var(--up); } .news .down { color: var(--down); }
+  .news .info { color: var(--blue); } .news .quote { color: #999; font-style: italic; }
+  .tape { padding: 8px 10px; color: #bbb; word-break: break-word; }
+  .tape i { font-style: normal; color: var(--amber); }
+  .vb { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .vb span { width: 84px; color: var(--amber); } .vb i { height: 12px; background: var(--amber); display: block; }
+  .fund { padding: 8px 12px; }
+  .fund .v { font-size: 22px; }
+  footer { display: flex; gap: 20px; padding: 4px 12px; background: var(--head); color: var(--dim); border-top: 1px solid var(--line); }
+  .halt { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(90,0,0,.55); font-size: 48px; font-weight: 800; color: #fff; pointer-events: none; letter-spacing: 4px; }
+  .halt.on { display: flex; }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">WHACK&lt;GO&gt; EXCHANGE</span>
+  <span>WHACK26 <span id="idx">-</span></span>
+  <span id="idxc"></span>
+  <span class="sp"></span>
+  <span>TICK <span id="tick">0</span></span>
+  <span id="clock"></span>
+  <button id="pp">PAUSE</button>
+  <button id="one">WHACK()</button>
+</header>
+<div class="ticker"><span class="run" id="tk"></span></div>
+<main>
+  <section>
+    <h2>EQUITIES <em>price · chg · mentions</em></h2>
+    <div><table id="tbl"></table></div>
+    <h2>MOST WHACKED THIS TICK <em>volume</em></h2>
+    <div class="scroll" id="vol" style="padding:6px 10px"></div>
+  </section>
+  <section>
+    <div class="bigq"><span class="s" id="ss">DUCK</span><span class="p" id="sp">-</span><span id="sc"></span><span class="n" id="sn"></span></div>
+    <div class="chartwrap"><canvas id="ch"></canvas></div>
+    <div class="row2">
+      <div><h2>DUCK CAPITAL LP <em>quant fund, signal = whack()</em></h2>
+        <div class="fund"><div class="v" id="fv">-</div><div id="fh"></div></div>
+        <div class="chartwrap"><canvas id="fc"></canvas></div></div>
+      <div><h2>WHACK26 INDEX</h2><div class="chartwrap"><canvas id="ic"></canvas></div></div>
+    </div>
+  </section>
+  <section>
+    <h2>WHACK NEWSWIRE <em>live</em></h2>
+    <div class="scroll news" id="news"></div>
+    <h2>OFFICIAL TRADE TAPE <em id="tn">cat whack</em></h2>
+    <div class="tape scroll" id="tape" style="flex:0 0 30%"></div>
+  </section>
+</main>
+<footer>
+  <span>All prices set exclusively by whack(). No other RNG was harmed.</span>
+  <span class="sp" style="flex:1"></span>
+  <span>Not financial advice. Not even advice.</span>
+</footer>
+<div class="halt" id="halt">TRADING HALTED: WIFI DOWN</div>
+<script>
+const $ = id => document.getElementById(id);
+let sel = "DUCK", state = null, playing = true;
+const fmt = (x, d = 2) => x.toFixed(d);
+const cls = x => x >= 0 ? "up" : "down";
+const sign = x => (x >= 0 ? "+" : "") + fmt(x) + "%";
+
+function draw(cv, data, color, fill) {
+  const r = cv.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  const g = cv.getContext("2d"); g.scale(dpr, dpr);
+  const W = r.width, H = r.height, pad = 8;
+  if (!data.length || W < 10) return;
+  const mn = Math.min(...data), mx = Math.max(...data), span = mx - mn || 1;
+  g.strokeStyle = "#1c1c1c"; g.lineWidth = 1;
+  for (let i = 1; i < 5; i++) { const y = pad + (H - 2 * pad) * i / 5; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+  g.fillStyle = "#555"; g.font = "11px Menlo";
+  g.fillText(fmt(mx), 4, pad + 10); g.fillText(fmt(mn), 4, H - pad - 2);
+  const X = i => (i / (data.length - 1 || 1)) * (W - 50) + 46, Y = v => pad + (H - 2 * pad) * (1 - (v - mn) / span);
+  g.beginPath(); data.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
+  g.strokeStyle = color; g.lineWidth = 2; g.stroke();
+  if (fill) { g.lineTo(X(data.length - 1), H); g.lineTo(X(0), H); g.closePath();
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, color + "55"); gr.addColorStop(1, color + "00");
+    g.fillStyle = gr; g.fill(); }
+  const lv = data[data.length - 1]; g.fillStyle = color; g.beginPath(); g.arc(X(data.length - 1), Y(lv), 3.5, 0, 7); g.fill();
+}
+
+function render(s) {
+  state = s;
+  $("tick").textContent = s.tick;
+  const i0 = s.index_hist[s.index_hist.length - 2] || s.index;
+  $("idx").textContent = fmt(s.index);
+  $("idxc").textContent = sign((s.index / i0 - 1) * 100);
+  $("tbl").innerHTML = s.stocks.map(k => `<tr data-s="${k.sym}" class="${k.sym === sel ? "sel " : ""}${Math.abs(k.chg) > 3 ? "flash-" + cls(k.chg) : ""}">
+    <td class="sym">${k.sym}</td><td class="num">${fmt(k.price)}</td><td class="num ${cls(k.chg)}">${sign(k.chg)}</td><td class="num" style="color:#777">${"▮".repeat(Math.min(k.mentions, 8))}</td></tr>`).join("");
+  document.querySelectorAll("#tbl tr").forEach(tr => tr.onclick = () => { sel = tr.dataset.s; render(state); });
+  const k = s.stocks.find(x => x.sym === sel);
+  $("ss").textContent = k.sym; $("sp").textContent = fmt(k.price);
+  $("sc").textContent = sign(k.chg); $("sc").className = cls(k.chg); $("sn").textContent = k.name;
+  const h = k.hist; draw($("ch"), h, h[h.length - 1] >= h[0] ? "#2fe07a" : "#ff4b4b", true);
+  draw($("ic"), s.index_hist, "#ffa028", true);
+  draw($("fc"), s.fund.hist, "#4fb3ff", true);
+  const fpct = (s.fund.value / 1000 - 1) * 100;
+  $("fv").innerHTML = `$${fmt(s.fund.value)} <span class="${cls(fpct)}" style="font-size:14px">${sign(fpct)} all-time</span>`;
+  $("fh").innerHTML = `ALL IN: <b style="color:var(--amber)">${s.fund.holding}</b> (most whack()'d ticker)`;
+  $("news").innerHTML = s.news.map(e => `<div class="${e.kind}"><span class="t">T${String(e.tick).padStart(3, "0")}</span>${e.text}</div>`).join("");
+  const hot = new Set(s.counts.slice(0, 3).map(c => c[0]));
+  $("tape").innerHTML = s.tape.map(w => hot.has(w) ? `<i>${w}</i>` : w).join(" ");
+  const mx = Math.max(...s.counts.map(c => c[1]));
+  $("vol").innerHTML = s.counts.map(([w, n]) => `<div class="vb"><span>${w}</span><i style="width:${n / mx * 200}px"></i>${n}</div>`).join("");
+  $("tn").textContent = `cat whack · ${s.n} lines`;
+  const tk = s.stocks.map(x => `<b>${x.sym}</b> ${fmt(x.price)} <span class="${cls(x.chg)}">${sign(x.chg)}</span>`).join("");
+  $("tk").innerHTML = tk + tk;
+  $("halt").classList.toggle("on", s.halted);
+}
+
+async function tick() { render(await (await fetch("/tick")).json()); }
+setInterval(() => { if (playing) tick(); }, 1400);
+setInterval(() => $("clock").textContent = new Date().toTimeString().slice(0, 8), 500);
+$("pp").onclick = () => { playing = !playing; $("pp").textContent = playing ? "PAUSE" : "PLAY"; };
+$("one").onclick = tick;
+addEventListener("resize", () => state && render(state));
+fetch("/state").then(r => r.json()).then(render);
+</script>
+</body>
+</html>
