@@ -167,3 +167,8 @@ aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
 @media (pointer: coarse) and (max-width: 700px) {
   .side { position: static; transform: none; flex-direction: row; }
 }
+
+#mycd { font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(15,20,52,.6); color: #c9cde0; }
+#mycd.ready { background: #ff5e4d; color: #fff; }
+#mycd[hidden] { display: none; }
+@media (pointer: coarse) { #mycd { font-size: 10px; padding: 2px 7px; } }

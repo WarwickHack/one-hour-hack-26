@@ -980,6 +980,10 @@ function renderHud() {
   $("hp").textContent = playing ? "♥".repeat(Math.max(0, state.hp)) + "♡".repeat(Math.max(0, MAX_HP - state.hp)) : "";
   $("score").textContent = playing ? `${state.score}` : "";
   const left = Math.ceil((SELF_WHACK_COOLDOWN_MS - (performance.now() - state.lastSelfWhack)) / 1000);
+  const cd = $("mycd");
+  cd.hidden = !playing;
+  cd.textContent = left > 0 ? `your whack ${left}s` : "your whack READY";
+  cd.className = left > 0 ? "" : "ready";
   const btn = $("whack-btn");
   btn.disabled = playing && left > 0;
   btn.textContent = !playing ? "WHACK()" : left > 0 ? `recharging ${left}s` : `WHACK() a duck (${net.peers.size + bots.filter((b) => !b.deadUntil).length})`;
