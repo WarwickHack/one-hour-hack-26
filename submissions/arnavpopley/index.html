@@ -29,6 +29,9 @@
   .stat b { display: block; font-size: 17px; font-variant-numeric: tabular-nums; }
   .stat span { color: var(--dim); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
   .stat.hero b { color: var(--literal); font-size: 24px; text-shadow: 0 0 18px rgba(255, 204, 51, .5); }
+  #phases { display: flex; gap: 8px; padding: 10px 20px 0; flex-wrap: wrap; }
+  #phases span { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); font-size: 12px; transition: all .3s; }
+  #phases span.on { color: #0a0c0f; background: var(--literal); border-color: var(--literal); box-shadow: 0 0 18px -4px var(--literal); font-weight: 700; }
   main { flex: 1; display: grid; grid-template-columns: 210px minmax(0, 1fr) 360px; gap: 14px; padding: 14px 20px 18px; height: 0; min-height: 600px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; position: relative; overflow: hidden; min-height: 0; }
   .panel h2 { margin: 0 0 10px; font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: .14em; font-weight: 600; }
@@ -117,6 +120,12 @@
     <div class="stat"><b id="restarts">0</b><span>restarts</span></div>
   </div>
 </header>
+<div id="phases">
+  <span data-p="seed">1 · whack() writes 40 random programs</span>
+  <span data-p="breed">2 · breed: whack() mutates them, the fittest survive</span>
+  <span data-p="prune">3 · prune every word it doesn't need</span>
+  <span data-p="run">4 · run the bred program</span>
+</div>
 <main>
   <section class="panel feed">
     <h2>whack() feed</h2>
@@ -165,6 +174,7 @@ const glyph = c => c > 32 && c < 127 ? String.fromCharCode(c) : c === 32 ? "␣"
 const text = arr => arr.map(glyph).join("");
 const fmt = n => Math.round(n).toLocaleString("en-GB");
 
+function phase(p) { document.querySelectorAll("#phases span").forEach(s => s.classList.toggle("on", s.dataset.p === p)); }
 function status(html, err = false) { $("status").innerHTML = html; $("status").classList.toggle("err", err); }
 
 function fit(canvas) {
@@ -180,14 +190,13 @@ function fit(canvas) {
 const drops = [];
 function spawn(words, n) {
   for (let i = 0; i < n && words && words.length; i++) {
-    drops.push({ w: words[(i * 7 + drops.length) % words.length], x: Math.random(), y: -4 - Math.random() * 30, v: 1.6 + Math.random() * 3 });
+    drops.push({ w: words[(i * 7 + drops.length) % words.length], x: Math.random(), y: -4 - Math.random() * 30, v: 0.8 + Math.random() * 0.9 });
   }
-  if (drops.length > 500) drops.splice(0, drops.length - 500);
+  if (drops.length > 70) drops.splice(0, drops.length - 70);
 }
 function rain() {
   const [ctx, w, h] = fit($("rain"));
-  ctx.fillStyle = "rgba(17, 21, 26, 0.24)";
-  ctx.fillRect(0, 0, w, h);
+  ctx.clearRect(0, 0, w, h);
   ctx.font = "12px ui-monospace, Menlo, monospace";
   ctx.textAlign = "center";
   for (const d of drops) {
@@ -323,6 +332,9 @@ function breed(target) {
              `Breeding from 40 programs that whack() wrote…`);
       renderTiles([], S.target);
     } else if (ev.type === "gen") {
+      phase(ev.gen === 1 ? "seed" : "breed");
+      if (ev.gen === 1) status("whack() just wrote 40 random programs. None of them print HONK yet.".replace("HONK", ev.target_text));
+      else if (S.history.length && S.history[0].gen === 1 && S.history.length === 1) status(`Breeding: every mutation and every choice comes from a fresh whack(). Letters lock in from the left.`);
       counters(ev);
       S.history.push({ gen: ev.gen, f: Math.max(0, ev.score) / ev.max });
       renderTiles(ev.out, ev.target);
@@ -334,7 +346,7 @@ function breed(target) {
       }
       renderPool(ev.pool);
       renderChart();
-      spawn(ev.rain, 2);
+      if (S.history.length % 2) spawn(ev.rain, 1);
     } else if (ev.type === "restart") {
       S.restarts.push(ev.gen);
       status(`Stuck on <b>${text(ev.stuck_on)}</b>. Honk! The goose scatters the flock: restart ${ev.restarts} from fresh whacks.`);
@@ -357,15 +369,16 @@ function breed(target) {
 async function finale(ev, my) {
   renderTiles(ev.trace.length ? ev.trace[ev.trace.length - 1].out : [], S.target);
   status(`<b>Bred it.</b> ${fmt(ev.gen)} generations, ${fmt(ev.calls)} calls to whack(), ${ev.elapsed.toFixed(1)}s. Now pruning every word it doesn't need…`);
+  phase("prune");
   renderTape(ev.before);
   $("tapeTitle").textContent = `the winner · ${ev.before.length} words`;
-  await sleep(900);
+  await sleep(1500);
   const keep = new Set(ev.keep), chips = [...$("tape").children];
   for (let i = 0; i < chips.length; i++) {
     if (my !== token) return;
-    if (!keep.has(i)) { chips[i].classList.add("cut"); await sleep(Math.max(25, 1400 / chips.length)); }
+    if (!keep.has(i)) { chips[i].classList.add("cut"); await sleep(Math.max(120, 2400 / chips.length)); }
   }
-  await sleep(700);
+  await sleep(1200);
   if (my !== token) return;
   renderTape(ev.program);
   $("tapeTitle").textContent = `pruned to the ${ev.program.length} words that matter (from ${ev.before.length}) · running it`;
@@ -375,10 +388,11 @@ async function finale(ev, my) {
 }
 
 async function execute(prog, trace, ending, target, my, steps) {
+  phase("run");
   $("chartPanel").hidden = true;
   $("vmPanel").hidden = false;
   const chips = [...$("tape").children];
-  const delay = trace.length > 60 ? Math.max(18, 7000 / trace.length) : 240;
+  const delay = trace.length > 40 ? Math.max(18, 9000 / trace.length) : 330;
   for (const f of trace) {
     if (my !== token) return;
     chips.forEach(c => c.classList.remove("pc"));

@@ -45,7 +45,7 @@ class Lab(SimpleHTTPRequestHandler):
         if url.path == "/api/wild":
             return self.wild()
         if url.path == "/api/breed":
-            return self.breed(parse_qs(url.query).get("target", [""])[0])
+            return self.breed(parse_qs(url.query).get("target", [""])[0], "fast" not in url.query)
         return super().do_GET()
 
     def wild(self):
@@ -59,7 +59,7 @@ class Lab(SimpleHTTPRequestHandler):
         out, ending, steps = run(prog, trace=trace, trace_limit=240)
         self.send_json({"program": prog, "trace": trace, "ending": ending, "steps": steps, "out": list(out)})
 
-    def breed(self, target):
+    def breed(self, target, watchable=True):
         rng = WhackRandom()
         target = "".join(c for c in target if 32 <= ord(c) < 127)[:8]
         chosen = not target
@@ -82,6 +82,8 @@ class Lab(SimpleHTTPRequestHandler):
                 if ev["type"] != "gen" or time.time() - last > 0.045:  # about 20 frames a second
                     last = time.time()
                     send(payload(ev))
+                if watchable and ev["type"] == "gen":  # slow enough to follow; ?fast skips this
+                    time.sleep(2.0 if ev["gen"] == 1 else 0.012)
                 if ev["type"] == "done":
                     print(f"  bred {target!r} in {ev['gen']:,} generations, {ev['calls']:,} calls to whack(): saved {save(ev)}")
         except (BrokenPipeError, ConnectionResetError):
