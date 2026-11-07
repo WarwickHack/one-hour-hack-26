@@ -1,0 +1,526 @@
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { OutlineEffect } from "three/addons/effects/OutlineEffect.js";
+import { buildWorld } from "./world.js";
+import { Pond } from "./pond.js";
+import { connect } from "./net.js";
+import { ABILITIES, updateAbilities } from "./abilities.js";
+
+const AUTO_WHACK_MS = 4000;
+const SELF_WHACK_COOLDOWN_MS = 10000;
+const POS_SEND_MS = 250;
+const BUFFS = new Set(["coffee", "rubber", "null", "pizza"]);
+const MINUTES_PER_TICK = 2;
+const DEADLINE = 90;
+const MAX_HP = 5;
+const BAD = new Set(["goose", "honk", "prod", "segfault", "null", "pointer", "overflow", "conflict", "sleep", "bug"]);
+const GOOD = new Set(["duck", "coffee", "pizza", "rubber", "feature", "prize", "deploy", "merge"]);
+
+const $ = (id) => document.getElementById(id);
+const canvas = $("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+const outline = new OutlineEffect(renderer, { defaultThickness: 0.006, defaultColor: [0.05, 0.05, 0.1], defaultAlpha: 1 });
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
+camera.position.set(0, 55, 75);
+const orbit = new OrbitControls(camera, canvas);
+orbit.target.set(0, 0, 0);
+orbit.enableDamping = true;
+orbit.maxPolarAngle = Math.PI * 0.47;
+
+const world = buildWorld(scene);
+scene.traverse((o) => { if (o.isSprite) o.visible = false; });
+const pond = new Pond(scene, world);
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+function buildPlayerDuck(bodyColor = 0xfaf7ef) {
+  const g = new THREE.Group();
+  const mat = (color) => new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 20, 14), mat(bodyColor));
+  body.scale.set(1, 0.75, 1.35);
+  body.position.y = 0.45;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 12), mat(0x1f7a4a));
+  head.position.set(0, 1.15, 0.75);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.45, 10), mat(0xff9a2e));
+  beak.rotation.x = Math.PI / 2;
+  beak.position.set(0, 1.08, 1.2);
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.55, 12), mat(0xff3b6b));
+  hat.position.set(0, 1.75, 0.72);
+  const shield = new THREE.Mesh(
+    new THREE.TorusGeometry(1.5, 0.08, 8, 40),
+    new THREE.MeshBasicMaterial({ color: 0xffd000 }),
+  );
+  shield.rotation.x = Math.PI / 2;
+  shield.position.y = 0.1;
+  shield.visible = false;
+  [body, head, beak, hat].forEach((m) => { m.castShadow = true; g.add(m); });
+  g.add(shield);
+  g.userData = { shield, head };
+  return g;
+}
+
+const duck = buildPlayerDuck();
+duck.position.set(0, world.lake.waterY, world.lake.radiusZ * 0.5);
+scene.add(duck);
+
+const keys = new Set();
+const state = {
+  phase: "menu",
+  name: "",
+  hp: MAX_HP,
+  score: 0,
+  whacks: 0,
+  minutes: 0,
+  heading: Math.PI,
+  camMode: "third",
+  effects: { invert: 0, slow: 0, fast: 0, shield: 0, hidden: 0, invuln: 0, quant: 0 },
+  diedTo: null,
+  lastSelfWhack: 0,
+  nextAuto: 0,
+};
+pond.player = { position: duck.position, hidden: false, shield: false };
+
+function clockText() {
+  const total = 22 * 60 + 30 + Math.min(state.minutes, DEADLINE);
+  const h = Math.floor(total / 60) % 24;
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+function toast(text, cls) {
+  const box = $("toasts");
+  const el = document.createElement("div");
+  el.textContent = text;
+  el.className = cls;
+  box.append(el);
+  setTimeout(() => el.remove(), 3200);
+  while (box.children.length > 3) box.firstChild.remove();
+}
+
+function log(lines, cls) {
+  if (cls !== "you") return;
+  const box = $("toasts");
+  for (const line of lines.slice(-2)) {
+    const el = document.createElement("div");
+    el.textContent = line.split(":")[0].split(".")[0];
+    if (cls) el.className = cls;
+    box.append(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+  while (box.children.length > 3) box.firstChild.remove();
+}
+
+function showFile(file, words) {
+  const lines = file.trimEnd().split("\n");
+  $("file-meta").textContent = `· ${words.length} words`;
+  $("file").innerHTML = lines
+    .map((w, i) => {
+      const cls = BAD.has(w) ? "hot" : GOOD.has(w) ? "good" : "";
+      return `<span class="ln">${i + 1}</span><span class="${cls}">${w}</span>`;
+    })
+    .join("\n");
+}
+
+function flash(color = "#ff3b2f") {
+  const el = $("flash");
+  el.style.background = color;
+  el.style.transition = "none";
+  el.style.opacity = "0.45";
+  requestAnimationFrame(() => { el.style.transition = "opacity .5s"; el.style.opacity = "0"; });
+}
+
+function countWords(words) {
+  const c = {};
+  for (const w of words) c[w] = (c[w] || 0) + 1;
+  return c;
+}
+
+function guide(c) {
+  const g = [];
+  if (c.goose || c.honk) g.push("🪿 GEESE — swim away!");
+  if (c.prod) g.push("☄️ METEOR — keep moving!");
+  if (c.bug || c.feature) g.push("🐛 bugs on the shore — eat them");
+  if (c.pizza || c.coffee) g.push("🍕 food on the lake — grab it");
+  return g;
+}
+
+function applyToPlayer(c) {
+  const e = state.effects;
+  const lines = [];
+  if (c.segfault) { e.invert = Math.min(6, 2 + c.segfault); lines.push(`💥 segfault ×${c.segfault}: your controls are now inverted`); }
+  if (c.sleep) { e.slow = Math.min(6, 2 + c.sleep); lines.push(`😴 sleep ×${c.sleep}: you are so, so tired`); }
+  if (c.coffee) { e.fast = Math.min(8, 3 + c.coffee); lines.push(`☕ coffee ×${c.coffee}: ZOOM`); }
+  if (c.rubber) { e.shield = Math.min(10, 4 + c.rubber * 2); lines.push(`🛟 rubber ×${c.rubber}: rubber duck shield up`); }
+  if (c.null) { e.hidden = Math.min(6, 2 + c.null); lines.push(`👻 null ×${c.null}: geese can't dereference you`); }
+  const fired = new Set();
+  for (const [word, n] of Object.entries(c)) {
+    const ability = ABILITIES[word];
+    if (!ability || fired.has(ability)) continue;
+    fired.add(ability);
+    try { lines.push(ability(abilityCtx, n)); } catch (err) { console.warn("ability", word, err); }
+  }
+  if (c.midnight) { state.minutes += c.midnight; lines.push(`🌙 midnight ×${c.midnight}: time flies (+${c.midnight} min)`); }
+  return lines;
+}
+
+async function doWhack(self) {
+  let data;
+  try {
+    data = await (await fetch("/api/whack")).json();
+  } catch {
+    log(["⚠️ whack() unreachable. The ducks wait."]);
+    return;
+  }
+  const { words, file } = data;
+  state.whacks += 1;
+  showFile(file, words);
+  const c = countWords(words);
+  if (state.phase === "play") {
+    const points = words.length * (self ? 2 : 1) * (state.effects.quant > 0 ? 2 : 1);
+    state.score += points;
+    if (!self) state.minutes += MINUTES_PER_TICK;
+  }
+  let header = `⏰ whack() #${state.whacks} · ${words.length} words · ${clockText()}`;
+  let pondLines;
+  let playerLines;
+  if (self) {
+    const victim = net.sendWhack(words);
+    header = victim
+      ? `🎯 You whack()ed ${victim} with ${words.length} words (+${words.length * 2})`
+      : `🫵 You whack()ed the lake: ${words.length} words (+${words.length * 2})`;
+    const me = pond.player;
+    pond.player = null;
+    pondLines = victim ? [] : pond.applyWhack(words) || [];
+    pond.player = me;
+    playerLines = applyToPlayer(countWords(words.filter((w) => BUFFS.has(w))));
+  } else {
+    pondLines = pond.applyWhack(words) || [];
+    playerLines = state.phase === "play" ? applyToPlayer(c) : [];
+    if (state.phase === "play") {
+      toast(`+${words.length} survived whack()`, "score");
+      guide(c).slice(0, 2).forEach((g) => toast(g, "warn"));
+    }
+  }
+  if (self) toast(header.replace(/\(.*\)/, ""), "score");
+}
+
+function onWhacked({ from, words }) {
+  if (state.phase !== "play") return;
+  showFile(words.join("\n") + "\n", words);
+  const pondLines = pond.applyWhack(words) || [];
+  const playerLines = applyToPlayer(countWords(words));
+  log([...pondLines].reverse());
+  log([...playerLines].reverse(), "you");
+  log([`🎯 ${from} whacked you`], "you");
+  flash("#b04bff");
+}
+
+const drops = [];
+function rain(chars, color, count) {
+  for (let i = 0; i < count; i++) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const ctx = c.getContext("2d");
+    ctx.font = "bold 52px monospace";
+    ctx.textAlign = "center";
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "#0b1030";
+    const ch = chars[Math.floor(Math.random() * chars.length)];
+    ctx.strokeText(ch, 32, 50);
+    ctx.fillStyle = color;
+    ctx.fillText(ch, 32, 50);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+    sp.scale.setScalar(0.8);
+    sp.position.set(duck.position.x + (Math.random() - 0.5) * 24, 18 + Math.random() * 14, duck.position.z + (Math.random() - 0.5) * 24);
+    sp.userData.v = 6 + Math.random() * 6;
+    scene.add(sp);
+    drops.push(sp);
+  }
+}
+function updateDrops(dt) {
+  for (let i = drops.length - 1; i >= 0; i--) {
+    const sp = drops[i];
+    sp.position.y -= sp.userData.v * dt;
+    if (sp.position.y < 0) {
+      scene.remove(sp);
+      sp.material.map.dispose();
+      sp.material.dispose();
+      drops.splice(i, 1);
+    }
+  }
+}
+function ticker() {
+  const s = pond.stats ? pond.stats() : {};
+  const q = (n) => `${(Math.random() * 9 - 3).toFixed(1)}%`;
+  const el = $("ticker");
+  el.textContent = `DUCK ${s.ducks ?? 0} ▲${q()}   GOOSE ${s.geese ?? 0} ▼${q()}   BUG ${s.bugs ?? 0} ▲${q()}   ${state.name.toUpperCase()} ${state.score} ▲${q()}   WHACK ${state.whacks} ▲${q()}`;
+  el.hidden = false;
+  clearTimeout(ticker.t);
+  ticker.t = setTimeout(() => (el.hidden = true), 6000);
+}
+
+const abilityCtx = {
+  THREE, scene, duck, state, MAX_HP, world, pond, rain, flash,
+  get effects() { return state.effects; },
+  addScore: (n) => { state.score += Math.round(n); },
+  heal: (n) => { state.hp = Math.min(MAX_HP, state.hp + n); },
+  spawnFloatingText: (text) => log([text], "you"),
+};
+
+const ghosts = new Map();
+function onPos(p) {
+  let g = ghosts.get(p.id);
+  if (!g) {
+    g = buildPlayerDuck(0xbfe3ff);
+    g.add(nameTag(p.name));
+    scene.add(g);
+    ghosts.set(p.id, g);
+  }
+  g.userData.target = p;
+  g.visible = p.alive;
+}
+function onLeave(id) {
+  const g = ghosts.get(id);
+  if (g) { scene.remove(g); ghosts.delete(id); }
+}
+function nameTag(text) {
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 64;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "rgba(11,16,48,.75)";
+  ctx.fillRect(0, 8, 256, 48);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 30px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText(String(text).slice(0, 16), 128, 43);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
+  s.scale.set(4, 1, 1);
+  s.position.y = 2.6;
+  return s;
+}
+function updateGhosts(dt) {
+  for (const g of ghosts.values()) {
+    const t = g.userData.target;
+    if (!t) continue;
+    const k = 1 - Math.exp(-10 * dt);
+    g.position.x += (t.x - g.position.x) * k;
+    g.position.z += (t.z - g.position.z) * k;
+    g.position.y = t.y;
+    g.rotation.y = t.heading;
+  }
+}
+
+const playerId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 8);
+const net = connect({ id: playerId, name: "lurker", onPos, onLeave, onWhacked });
+let lastPosSend = 0;
+
+pond.onPlayerHit = (kind, by) => {
+  if (state.phase !== "play" || state.effects.invuln > 0) return;
+  if (state.effects.shield > 0) return;
+  const dmg = kind === "prod" ? 2 : 1;
+  state.hp -= dmg;
+  state.effects.invuln = 1;
+  flash(kind === "prod" ? "#ff8a00" : "#ff3b2f");
+  if (state.hp <= 0) end(false, kind === "prod" ? "a PROD meteor" : by);
+};
+
+pond.onPlayerPickup = (kind) => {
+  if (state.phase !== "play") return;
+  if (kind === "bug") { state.score += 10; log(["🐛 you ate a bug (+10)"], "you"); }
+  if (kind === "feature") { state.score += 50; log(["✨ you ate a FEATURE (+50)"], "you"); }
+  if (kind === "pizza") { state.hp = Math.min(MAX_HP, state.hp + 1); log(["🍕 pizza (+1 ❤)"], "you"); }
+  if (kind === "coffee") { state.effects.fast = Math.max(state.effects.fast, 4); log(["☕ coffee (speed)"], "you"); }
+};
+
+function selfWhack() {
+  const now = performance.now();
+  if (state.phase !== "play" || now - state.lastSelfWhack < SELF_WHACK_COOLDOWN_MS) return;
+  state.lastSelfWhack = now;
+  doWhack(true);
+}
+
+async function leaderboardHtml() {
+  try {
+    const rows = await (await fetch("/api/scores")).json();
+    if (!rows.length) return "";
+    return `<ol class="sub" style="text-align:left">${rows
+      .slice(0, 10)
+      .map((r) => `<li><b>${escapeHtml(r.name)}</b> ${r.score}${r.survived ? " 🏆" : ""}</li>`)
+      .join("")}</ol>`;
+  } catch {
+    return "";
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+}
+
+async function showMenu() {
+  const b = $("banner");
+  b.hidden = false;
+  b.innerHTML = `
+    <h1>LAKE QUACKULUS</h1>
+    <p class="sub">Every few seconds <b>whack()</b> throws random chaos at you. Survive till midnight.</p>
+    <input id="name" maxlength="16" placeholder="duck name" style="font:inherit;padding:10px 14px;border-radius:8px;border:0;text-align:center">
+    <p class="sub"><span class="key">WASD</span> swim · <span class="key">SPACE</span> whack another duck · <span class="key">ENTER</span> play</p>
+    ${await leaderboardHtml()}`;
+  const input = $("name");
+  input.value = state.name;
+  input.focus();
+}
+
+function start() {
+  state.name = ($("name")?.value || "anon duck").trim().slice(0, 16) || "anon duck";
+  Object.assign(state, { phase: "play", hp: MAX_HP, score: 0, whacks: 0, minutes: 0, diedTo: null });
+  Object.keys(state.effects).forEach((k) => (state.effects[k] = 0));
+  duck.position.copy(world.randomLakePoint());
+  state.heading = Math.random() * Math.PI * 2;
+  duck.visible = true;
+  state.camMode = "third";
+  net.rename(state.name);
+  $("banner").hidden = true;
+  $("toasts").innerHTML = "";
+  state.nextAuto = performance.now() + 1500;
+}
+
+async function end(survived, diedTo) {
+  state.phase = survived ? "won" : "dead";
+  state.diedTo = diedTo;
+  if (!survived) duck.visible = false;
+  const body = { name: state.name, score: state.score, survived, died_to: diedTo, whacks: state.whacks };
+  try {
+    await fetch("/api/scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch { /* leaderboard is a bonus; the game still ends */ }
+  const b = $("banner");
+  b.hidden = false;
+  b.innerHTML = `
+    <h1>${survived ? "SURVIVED 🏆" : "QUACKED"}</h1>
+    <p class="sub">${survived ? "" : `${escapeHtml(diedTo)} got you · `}<b>${state.score}</b></p>
+    ${await leaderboardHtml()}
+    <p><span class="key">ENTER</span> again</p>`;
+}
+
+addEventListener("keydown", (ev) => {
+  const k = ev.key.toLowerCase();
+  if (k === "enter" && state.phase !== "play") {
+    if (state.phase === "menu") start();
+    else { state.phase = "menu"; showMenu(); }
+    return;
+  }
+  if (ev.target.tagName === "INPUT") return;
+  if (k === " ") { ev.preventDefault(); selfWhack(); return; }
+  keys.add(k);
+});
+addEventListener("keyup", (ev) => keys.delete(ev.key.toLowerCase()));
+$("whack-btn").addEventListener("click", () => (state.phase === "play" ? selfWhack() : doWhack(false)));
+
+function movePlayer(dt) {
+  const e = state.effects;
+  const dir = e.invert > 0 ? -1 : 1;
+  let turn = 0;
+  let fwd = 0;
+  if (keys.has("a") || keys.has("arrowleft")) turn += 1;
+  if (keys.has("d") || keys.has("arrowright")) turn -= 1;
+  if (keys.has("w") || keys.has("arrowup")) fwd += 1;
+  if (keys.has("s") || keys.has("arrowdown")) fwd -= 1;
+  const speed = 9 * (e.fast > 0 ? 1.8 : 1) * (e.slow > 0 ? 0.35 : 1);
+  state.heading += turn * dir * 2.6 * dt;
+  const step = fwd * dir * speed * dt;
+  duck.position.x = THREE.MathUtils.clamp(duck.position.x + Math.sin(state.heading) * step, -85, 85);
+  duck.position.z = THREE.MathUtils.clamp(duck.position.z + Math.cos(state.heading) * step, -85, 85);
+  duck.rotation.y = state.heading;
+  const inLake = world.isInLake(duck.position.x, duck.position.z);
+  duck.position.y = inLake ? world.lake.waterY + Math.sin(performance.now() / 300) * 0.06 : 0;
+}
+
+function tickEffects(dt) {
+  const e = state.effects;
+  for (const k of Object.keys(e)) e[k] = Math.max(0, e[k] - dt);
+  pond.player.hidden = e.hidden > 0;
+  pond.player.shield = e.shield > 0;
+  duck.userData.shield.visible = e.shield > 0;
+  duck.visible = state.phase === "dead" ? false : !(e.invuln > 0 && Math.floor(performance.now() / 80) % 2);
+}
+
+const camTarget = new THREE.Vector3();
+function updateCamera(dt) {
+  const following = state.phase === "play" && state.camMode !== "orbit";
+  orbit.enabled = !following;
+  if (!following) { orbit.update(); return; }
+  const fwd = new THREE.Vector3(Math.sin(state.heading), 0, Math.cos(state.heading));
+  if (state.camMode === "third") {
+    const want = duck.position.clone().addScaledVector(fwd, -14).add(new THREE.Vector3(0, 8, 0));
+    camera.position.lerp(want, 1 - Math.exp(-6 * dt));
+    camTarget.copy(duck.position).addScaledVector(fwd, 4).add(new THREE.Vector3(0, 1, 0));
+  } else {
+    camera.position.copy(duck.position).add(new THREE.Vector3(0, 1.3, 0)).addScaledVector(fwd, 1.0);
+    camTarget.copy(camera.position).addScaledVector(fwd, 10).add(new THREE.Vector3(0, -0.6, 0));
+  }
+  duck.userData.head.visible = state.camMode !== "first";
+  camera.lookAt(camTarget);
+  orbit.target.copy(duck.position);
+}
+
+function renderHud() {
+  const playing = state.phase === "play";
+  $("clock").textContent = clockText();
+  const toNext = Math.max(0, state.nextAuto - performance.now()) / AUTO_WHACK_MS;
+  $("next-bar").style.width = `${(1 - toNext) * 100}%`;
+  $("hp").textContent = playing ? "♥".repeat(Math.max(0, state.hp)) + "♡".repeat(Math.max(0, MAX_HP - state.hp)) : "";
+  $("score").textContent = playing ? `${state.score}` : "";
+  const left = Math.ceil((SELF_WHACK_COOLDOWN_MS - (performance.now() - state.lastSelfWhack)) / 1000);
+  const btn = $("whack-btn");
+  btn.disabled = playing && left > 0;
+  btn.textContent = !playing ? "WHACK()" : left > 0 ? `recharging ${left}s` : net.peers.size ? `WHACK() a duck (${net.peers.size})` : "WHACK()";
+  const e = state.effects;
+  $("effects").textContent = playing
+    ? [e.invert && "🔀 inverted", e.slow && "😴 slow", e.fast && "☕ fast", e.shield && "🛡️ shield", e.hidden && "👻 invisible", e.quant && "📈 ×2"].filter(Boolean).join("  ")
+    : "";
+}
+
+const clock = new THREE.Clock();
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  const now = performance.now();
+  if (now >= state.nextAuto) {
+    state.nextAuto = now + AUTO_WHACK_MS;
+    doWhack(false);
+  }
+  updateGhosts(dt);
+  updateDrops(dt);
+  updateAbilities(abilityCtx, dt);
+  if (now - lastPosSend > POS_SEND_MS && state.phase !== "menu") {
+    lastPosSend = now;
+    const p = duck.position;
+    net.sendPos({ x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), heading: +state.heading.toFixed(2), alive: state.phase === "play" });
+  }
+  if (state.phase === "play") {
+    movePlayer(dt);
+    if (state.minutes >= DEADLINE) end(true, null);
+  }
+  tickEffects(dt);
+  world.setNight(0);
+  world.update(dt, t);
+  pond.update(dt, t);
+  updateCamera(dt);
+  renderHud();
+  outline.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+showMenu();
+frame();

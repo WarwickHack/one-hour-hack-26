@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warwick Quack Soc Social</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header id="top">
+    <div id="title">LAKE QUACKULUS</div>
+    <div id="hp"></div>
+    <div id="score"></div>
+    <div id="goal">survive till 00:00</div>
+    <div id="clock">22:30</div>
+  </header>
+
+  <aside id="file-panel">
+    <div class="panel-head">whack() <span id="file-meta"></span></div>
+    <pre id="file"></pre>
+  </aside>
+
+  <div id="next"><div id="next-bar"></div><span>next whack()</span></div>
+  <div id="toasts"></div>
+  <div id="effects"></div>
+
+  <footer id="controls">
+    <button id="whack-btn">WHACK()</button>
+  </footer>
+
+  <div id="ticker" hidden></div>
+  <div id="flash"></div>
+  <div id="banner"></div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
