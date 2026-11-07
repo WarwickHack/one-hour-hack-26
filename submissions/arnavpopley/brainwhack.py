@@ -5,13 +5,13 @@ The breeder evolves programs that print a target. Every program it starts from, 
 mutation it makes and every random choice it takes comes from calling whack().
 This file never imports Python's random module.
 
-    python3 whacklang.py               whack() once, then run the program it wrote
-    python3 whacklang.py evolve HONK   breed a program that prints HONK, live in the terminal
-    python3 whacklang.py evolve        let whack() choose what to breed
-    python3 whacklang.py trace FILE    step through a program one instruction at a time
-    python3 whacklang.py run FILE      run any file of BrainWhack words (try: run whack)
-    python3 whacklang.py census        run 1,000 wild whack() programs and see what lives there
-    python3 whacklang.py ops           the instruction set
+    python3 brainwhack.py               whack() once, then run the program it wrote
+    python3 brainwhack.py evolve HONK   breed a program that prints HONK, live in the terminal
+    python3 brainwhack.py evolve        let whack() choose what to breed
+    python3 brainwhack.py trace FILE    step through a program one instruction at a time
+    python3 brainwhack.py run FILE      run any file of BrainWhack words (try: run whack)
+    python3 brainwhack.py census        run 1,000 wild whack() programs and see what lives there
+    python3 brainwhack.py ops           the instruction set
     python3 whack_lab.py               the breeder, visualised in the browser
 """
 import os
@@ -444,7 +444,7 @@ def breed_cli(target):
     print("\n".join(wrap_words(ev["program"], 90, "  ")))
     print(f"\nOutput {show(out)!r}, then {ENDINGS[ev['ending']]} after {ev['steps']} steps.")
     name = save(ev)
-    print(f"Saved to {name}. Step through it: python3 whacklang.py trace {name}")
+    print(f"Saved to {name}. Step through it: python3 brainwhack.py trace {name}")
 
 
 def trace_cli(path):
@@ -487,7 +487,7 @@ def census(n=1000):
     if best:
         said = best.decode()[:30] + ("..." if len(best) > 30 else "")
         print(f"\n  The most eloquent wild program said {said!r}. It was {len(best_prog)} words long.")
-    print("\n  Nothing in the wild says HONK. Try: python3 whacklang.py evolve HONK")
+    print("\n  Nothing in the wild says HONK. Try: python3 brainwhack.py evolve HONK")
 
 
 def main():

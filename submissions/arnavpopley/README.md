@@ -10,10 +10,10 @@ Python 3.9 or newer, standard library only.
 
 ```
 cd submissions/arnavpopley
-python3 whacklang.py evolve HONK       # breed a program that prints HONK, saved as bred_HONK.wl
-python3 whacklang.py run bred_HONK.wl  # run any program file
-python3 whacklang.py trace bred_HONK.wl  # step through it one word at a time, with the stack
-python3 whacklang.py census           # run 1,000 wild whack() programs: most of them crash
+python3 brainwhack.py evolve HONK       # breed a program that prints HONK, saved as bred_HONK.wl
+python3 brainwhack.py run bred_HONK.wl  # run any program file
+python3 brainwhack.py trace bred_HONK.wl  # step through it one word at a time, with the stack
+python3 brainwhack.py census           # run 1,000 wild whack() programs: most of them crash
 python3 whack_lab.py                   # the lab, then open http://localhost:8026/?breed=HONK
 ```
 

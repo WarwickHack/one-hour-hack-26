@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, urlparse
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))  # whack() writes its file next to this script
 from whack import WORDS, whack  # noqa: E402
-from whacklang import DOCS, FAMILY, INDEX, WhackRandom, evolve, run, save, whack_target  # noqa: E402
+from brainwhack import DOCS, FAMILY, INDEX, WhackRandom, evolve, run, save, whack_target  # noqa: E402
 
 PORT = 8026
 
