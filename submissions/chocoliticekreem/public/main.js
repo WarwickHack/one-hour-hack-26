@@ -917,8 +917,30 @@ function updateCamera(dt) {
   orbit.target.copy(duck.position);
 }
 
+const crown = (() => {
+  const g = new THREE.Group();
+  const gold = new THREE.MeshStandardMaterial({ color: 0xffc83d, metalness: 0.7, roughness: 0.25, emissive: 0x7a5200, emissiveIntensity: 0.4 });
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.22, 16, 1, true), gold);
+  band.material.side = THREE.DoubleSide;
+  g.add(band);
+  for (let i = 0; i < 5; i++) {
+    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 6), gold);
+    const a = (i / 5) * Math.PI * 2;
+    spike.position.set(Math.cos(a) * 0.38, 0.25, Math.sin(a) * 0.38);
+    g.add(spike);
+  }
+  g.visible = false;
+  scene.add(g);
+  return g;
+})();
+let crownOn = null;
+
 let lastLive = 0;
 function renderLive() {
+  if (crownOn) {
+    crown.position.set(crownOn.position.x, crownOn.position.y + 2.45, crownOn.position.z);
+    crown.rotation.y += 0.03;
+  }
   const now = performance.now();
   if (now - lastLive < 500) return;
   lastLive = now;
@@ -927,9 +949,12 @@ function renderLive() {
   for (const b of bots) if (!b.deadUntil) rows.push({ name: b.name, score: b.score, bot: true });
   for (const g of ghosts.values()) {
     const t = g.userData.target;
-    if (t?.alive) rows.push({ name: t.name, score: t.score || 0 });
+    if (t?.alive) rows.push({ name: t.name, score: t.score || 0, group: g });
   }
   rows.sort((a, b) => b.score - a.score);
+  const leader = rows[0];
+  crownOn = !leader ? null : leader.me ? duck : leader.bot ? bots.find((b) => b.name === leader.name)?.group : leader.group;
+  crown.visible = state.phase === "play" && !!crownOn;
   const el = $("live");
   el.hidden = state.phase !== "play";
   el.innerHTML = `<div class="panel-head">live ranking</div>${rows.slice(0, 6).map((r, i) =>
