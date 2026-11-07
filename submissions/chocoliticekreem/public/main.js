@@ -37,7 +37,6 @@ orbit.enableDamping = true;
 orbit.maxPolarAngle = Math.PI * 0.47;
 
 const world = buildWorld(scene);
-scene.traverse((o) => { if (o.isSprite) o.visible = false; });
 const pond = new Pond(scene, world);
 
 addEventListener("resize", () => {

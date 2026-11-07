@@ -34,21 +34,19 @@ function canvasTexture(w, h, draw) {
 
 function makeLabel(text) {
   const tex = canvasTexture(512, 128, (g, w, h) => {
-    g.fillStyle = "rgba(22,18,34,0.75)";
-    roundRect(g, 8, 16, w - 16, h - 32, 28);
+    g.fillStyle = "rgba(15,20,52,0.45)";
+    roundRect(g, 8, 16, w - 16, h - 32, 48);
     g.fill();
-    g.strokeStyle = "rgba(255,214,160,0.95)";
-    g.lineWidth = 4;
-    g.stroke();
-    g.font = "bold 52px system-ui, -apple-system, 'Segoe UI', sans-serif";
+    g.font = "600 52px Fredoka, system-ui, sans-serif";
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillStyle = "#fff6e8";
     g.fillText(text, w / 2, h / 2 + 2, w - 48);
   });
-  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false });
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, opacity: 0.7 });
+  mat.userData.outlineParameters = { visible: false };
   const s = new THREE.Sprite(mat);
-  s.scale.set(16, 4, 1);
+  s.scale.set(9, 2.25, 1);
   s.renderOrder = 10;
   return s;
 }
