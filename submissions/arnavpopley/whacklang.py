@@ -1,4 +1,4 @@
-"""Brainwhack: every whack() output is a program, and whack() is the only dice in the box.
+"""BrainWhack: every whack() output is a program, and whack() is the only dice in the box.
 
 The 42 words are the opcodes of a tiny stack machine that works on bytes (0-255).
 The breeder evolves programs that print a target. Every program it starts from, every
@@ -9,7 +9,7 @@ This file never imports Python's random module.
     python3 whacklang.py evolve HONK   breed a program that prints HONK, live in the terminal
     python3 whacklang.py evolve        let whack() choose what to breed
     python3 whacklang.py trace FILE    step through a program one instruction at a time
-    python3 whacklang.py run FILE      run any file of Brainwhack words (try: run whack)
+    python3 whacklang.py run FILE      run any file of BrainWhack words (try: run whack)
     python3 whacklang.py census        run 1,000 wild whack() programs and see what lives there
     python3 whacklang.py ops           the instruction set
     python3 whack_lab.py               the breeder, visualised in the browser
@@ -401,7 +401,7 @@ def dashboard(ev, note=""):
 def save(ev):
     name = "bred_" + re.sub(r"[^A-Za-z0-9]", "_", ev["target_text"]) + ".wl"
     with open(name, "w", encoding="utf-8") as f:
-        f.write(f"# Brainwhack program bred to print {ev['target_text']!r}\n")
+        f.write(f"# BrainWhack program bred to print {ev['target_text']!r}\n")
         f.write(f"# {ev['gen']:,} generations, {ev['calls']:,} calls to whack() ({ev['genes']:,} genes, "
                 f"{ev['dice']:,} dice), {ev['restarts']} restarts, {ev['elapsed']:.1f}s\n")
         f.write(" ".join(ev["program"]) + "\n")

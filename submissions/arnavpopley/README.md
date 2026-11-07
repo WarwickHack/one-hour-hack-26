@@ -1,4 +1,4 @@
-# Brainwhack
+# BrainWhack
 
 **By:** Arnav Popley
 
@@ -23,7 +23,7 @@ python3 whack_lab.py                   # the lab, then open http://localhost:802
 
 ## The 42 words
 
-Brainwhack is a stack machine that works on bytes (0 to 255). Each of the 42 words whack() can write is one instruction, so any whack() output runs.
+BrainWhack is a stack machine that works on bytes (0 to 255). Each of the 42 words whack() can write is one instruction, so any whack() output runs.
 
 | Word | What it does |
 |---|---|

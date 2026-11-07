@@ -1,4 +1,4 @@
-"""Brainwhack Lab: watch whack() breed a program, live in the browser.
+"""BrainWhack Lab: watch whack() breed a program, live in the browser.
 
     python3 whack_lab.py      then open http://localhost:8026
 
@@ -92,5 +92,5 @@ class Lab(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"Brainwhack Lab on http://localhost:{PORT}   (or http://localhost:{PORT}/?breed=HONK)")
+    print(f"BrainWhack Lab on http://localhost:{PORT}   (or http://localhost:{PORT}/?breed=HONK)")
     ThreadingHTTPServer(("127.0.0.1", PORT), Lab).serve_forever()
