@@ -796,7 +796,15 @@ function start() {
   $("toasts").innerHTML = "";
   state.nextAuto = performance.now() + 1500;
   state.joinedAt = performance.now();
-  bots.forEach((b, i) => { b.nextWhack = performance.now() + 10000 + i * 7000; b.score = 0; });
+  bots.forEach((b, i) => {
+    b.nextWhack = performance.now() + 10000 + i * 7000;
+    b.score = 0;
+    const ang = state.heading + (i - 1) * 0.7;
+    const dist = 10 + i * 4;
+    const x = duck.position.x + Math.sin(ang) * dist;
+    const z = duck.position.z + Math.cos(ang) * dist;
+    b.group.position.copy(world.isInLake(x, z) ? new THREE.Vector3(x, world.lake.waterY, z) : world.randomLakePoint());
+  });
 }
 
 async function end(survived, diedTo) {
