@@ -306,6 +306,15 @@ function spawnLogo(word, slug) {
   cardBack.position.z = -0.02;
   cardBack.rotation.y = Math.PI;
   card.position.y = backing.position.y = 2.2;
+  const fit = () => {
+    const img = card.material.map.image;
+    if (!img || !img.width) return;
+    const w = 3.4;
+    const h = Math.max(0.5, Math.min(1.9, w * img.height / img.width));
+    card.scale.set(w / 3.2, h / 1.6, 1);
+    cardBack.scale.copy(card.scale);
+    backing.scale.set((w + 0.4) / 3.5, (h + 0.4) / 1.9, 1);
+  };
   const glow = new THREE.Mesh(glowGeo, glowMats.good);
   glow.rotation.x = -Math.PI / 2;
   glow.scale.setScalar(1.6);
@@ -315,6 +324,8 @@ function spawnLogo(word, slug) {
   g.add(backing, card, glow, tag, cardBack);
   g.position.copy(world.randomLakePoint());
   g.userData = { slug, word, born: performance.now(), cards: [backing, card, cardBack] };
+  fit();
+  if (!card.material.map.image?.width) setTimeout(fit, 800);
   scene.add(g);
   logos.push(g);
 }
