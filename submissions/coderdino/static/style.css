@@ -1,0 +1,240 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: radial-gradient(ellipse at 50% -20%, #16222c 0%, #070a0e 55%, #000 100%);
+  color: #e7f1f7;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  display: grid; 
+  place-items: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+#stage {
+  position: relative;
+  width: min(96vw, calc(96vh * 4 / 3));
+  aspect-ratio: 4 / 3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 
+    0 0 0 1px rgba(120, 255, 200, .18), 
+    0 0 60px rgba(120, 255, 200, .10), 
+    0 40px 120px rgba(0, 0, 0, .75);
+}
+
+#cam { 
+  position: absolute; 
+  width: 2px; 
+  height: 2px; 
+  opacity: 0; 
+  pointer-events: none; 
+}
+
+#game { 
+  position: absolute; 
+  inset: 0; 
+  width: 100%; 
+  height: 100%; 
+  display: block; 
+  cursor: crosshair; 
+}
+
+#scanlines {
+  position: absolute; 
+  inset: 0; 
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(255,255,255,.018) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay; 
+  opacity: .55;
+}
+
+/* ---------- HUD ---------- */
+#hud {
+  position: absolute; 
+  top: 12px; 
+  left: 14px; 
+  right: 14px;
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  pointer-events: none; 
+  z-index: 5; 
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  padding: 7px 13px; 
+  border-radius: 12px;
+  background: rgba(10, 20, 18, .55); 
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(140, 255, 90, .22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.35);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.chip.wide { min-width: 220px; flex: 0 0 auto; }
+.lbl { font-size: 10px; letter-spacing: .14em; color: rgba(180, 255, 150, .75); }
+.val { font-size: 15px; font-weight: 700; color: #eaffea; text-shadow: 0 0 12px rgba(140, 255, 90, .45); }
+
+.hpbar { flex: 1; height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+#h-hpfill { 
+  height: 100%; 
+  width: 100%; 
+  border-radius: 99px; 
+  background: linear-gradient(90deg, #4fffa0, #8cff50); 
+  box-shadow: 0 0 14px rgba(140, 255, 90, .7); 
+  transition: width .18s ease, background .3s ease; 
+}
+
+#h-combo.hot { color: #ffd73c; text-shadow: 0 0 12px rgba(255, 215, 60, .8); }
+
+/* Legend Chip in HUD */
+.legend { gap: 12px; padding: 7px 14px; font-size: 11px; font-weight: 700; letter-spacing: .1em; }
+.legend .warn { color: #ff4150; text-shadow: 0 0 10px rgba(255, 65, 80, .5); }
+.legend .heal { color: #5cff80; text-shadow: 0 0 10px rgba(92, 255, 128, .5); }
+
+.mute { 
+  margin-left: auto; 
+  pointer-events: auto; 
+  background: rgba(10, 20, 18, .55); 
+  border: 1px solid rgba(140, 255, 90, .22); 
+  color: #b6ffb0; 
+  border-radius: 12px; 
+  padding: 7px 12px; 
+  font-size: 16px; 
+  cursor: pointer; 
+  backdrop-filter: blur(14px); 
+  transition: transform .1s; 
+}
+.mute:hover { transform: scale(1.08); }
+.mute.off { opacity: .35; }
+
+/* ---------- Narrator ---------- */
+.narration {
+  position: absolute; 
+  left: 50%; 
+  bottom: 56px; 
+  transform: translateX(-50%);
+  max-width: 76%; 
+  padding: 12px 20px;
+  background: rgba(6, 10, 8, .82); 
+  border: 1px solid rgba(140, 255, 90, .35);
+  border-radius: 14px; 
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(140, 255, 90, .15);
+  font-family: "JetBrains Mono", monospace; 
+  font-size: 15px; 
+  line-height: 1.45;
+  color: #dfffe0; 
+  text-align: center; 
+  z-index: 6; 
+  opacity: 1; 
+  transition: opacity .35s ease;
+}
+.narration.hidden { opacity: 0; }
+.narration .quote { color: #8cff50; font-weight: 700; }
+.narration .who { display: block; margin-top: 4px; font-size: 10px; letter-spacing: .22em; color: rgba(180, 255, 150, .55); }
+
+/* ---------- File stream ---------- */
+#stream {
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0;
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  padding: 8px 16px;
+  background: linear-gradient(0deg, rgba(0,0,0,.82), rgba(0,0,0,0));
+  font-family: "JetBrains Mono", monospace; 
+  font-size: 11px; 
+  color: rgba(180, 255, 150, .85);
+  pointer-events: none; 
+  z-index: 5;
+}
+#stream .tag { padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(140, 255, 90, .3); background: rgba(140, 255, 90, .08); letter-spacing: .08em; }
+#stream .words { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Overlays (Intro & End Screens) ---------- */
+.overlay {
+  position: absolute; 
+  inset: 0; 
+  display: grid; 
+  place-items: center;
+  background: radial-gradient(circle at 50% 40%, rgba(20, 40, 32, .55), rgba(0, 0, 0, .85) 70%), rgba(0, 0, 0, .4);
+  backdrop-filter: blur(6px); 
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10; 
+  transition: opacity .3s ease; 
+  overflow-y: auto; 
+  padding: 24px;
+}
+.overlay.hidden { opacity: 0; pointer-events: none; }
+
+.card {
+  max-width: 620px; 
+  padding: 36px 42px; 
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(16, 26, 24, .94), rgba(8, 14, 12, .97));
+  border: 1px solid rgba(140, 255, 90, .25);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 30px 80px rgba(0,0,0,.8), 0 0 100px rgba(140, 255, 90, .08);
+  text-align: center;
+}
+
+.card h1 { font-size: 64px; letter-spacing: -.03em; line-height: 1; text-shadow: 0 0 30px rgba(140, 255, 90, .25); }
+.card h1 .accent { color: #8cff50; text-shadow: 0 0 24px rgba(140, 255, 90, .8); }
+.card h2 { font-size: 34px; letter-spacing: -.01em; margin-bottom: 8px; }
+.card.win h2 { color: #8cff50; text-shadow: 0 0 24px rgba(140, 255, 90, .5); }
+.card.over h2 { color: #ff5c5c; text-shadow: 0 0 24px rgba(255, 80, 80, .45); }
+
+.eyebrow { font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .28em; color: rgba(180, 255, 150, .55); margin-bottom: 6px; }
+.card .sub { margin-top: 6px; color: rgba(180, 255, 150, .8); font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 22px; }
+.card h3 { font-size: 11px; letter-spacing: .22em; color: rgba(180, 255, 150, .7); text-align: left; margin: 18px 0 8px; font-family: "JetBrains Mono", monospace; }
+
+/* Goal & Legend Box */
+.card .goal { text-align: left; font-size: 14px; line-height: 1.6; color: rgba(230, 245, 240, .85); padding: 12px 14px; border-left: 3px solid #8cff50; background: rgba(140, 255, 90, .06); border-radius: 6px; }
+.card .goal b { color: #8cff50; }
+.card .goal code { font-family: "JetBrains Mono", monospace; font-size: 12px; padding: 1px 6px; border-radius: 5px; background: rgba(140, 255, 90, .12); color: #b6ffb0; }
+
+.legend-full { list-style: none; text-align: left; margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: rgba(230, 245, 240, .85); }
+.legend-full li { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; }
+.legend-full b { color: #eaffea; font-size: 15px; }
+.legend-full .subtext { font-size: 12px; color: rgba(230, 245, 240, 0.6); }
+.legend-full .heal { color: #5cff80; font-weight: 700; }
+.legend-full .dmg  { color: #ff5c5c; font-weight: 700; }
+
+.lg-pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 8px 12px; border-radius: 10px;
+  font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 12px; white-space: nowrap;
+  background: rgba(14, 18, 24, .9); flex-shrink: 0; width: 110px;
+}
+.lg-pill.hostile { color: #ffd0d5; border: 2px solid #ff4150; box-shadow: 0 0 14px rgba(255,65,80,.3); }
+.lg-pill.friendly { color: #d4ffde; border: 2px solid #5cff80; box-shadow: 0 0 14px rgba(92,255,128,.3); }
+
+/* Controls */
+.card .controls { list-style: none; text-align: left; font-size: 14px; line-height: 1.85; color: rgba(230, 245, 240, .82); }
+.card .controls b { color: #8cff50; }
+.card .controls em { color: rgba(180, 255, 150, .6); font-style: normal; font-size: 12px; }
+
+/* Stats & Quip */
+.card .stats { color: #eaffea; font-family: "JetBrains Mono", monospace; font-size: 14px; margin: 12px 0 6px; line-height: 1.7; }
+.card .quip { margin: 14px 0 8px; font-family: "JetBrains Mono", monospace; font-size: 13px; color: #ffd73c; font-style: italic; line-height: 1.5; }
+
+/* Grade */
+.grade { font-family: "Space Grotesk", sans-serif; font-size: 120px; font-weight: 700; line-height: 1; color: #8cff50; text-shadow: 0 0 40px rgba(140, 255, 90, .6), 0 0 90px rgba(140, 255, 90, .3); margin: 6px 0; animation: gradePop .6s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes gradePop { from { transform: scale(0.3) rotate(-12deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+
+/* Buttons */
+.card button { width: 100%; padding: 15px; border: 0; border-radius: 12px; font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .14em; color: #071408; background: linear-gradient(135deg, #a6ff5c, #4fffa0); cursor: pointer; transition: transform .12s ease, box-shadow .2s ease, filter .2s ease; box-shadow: 0 8px 30px rgba(140, 255, 90, .35); margin-top: 22px; }
+.card button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(140, 255, 90, .5); }
+.card button:disabled { filter: grayscale(.7) brightness(.6); cursor: progress; }
+
+.card .hint { margin-top: 14px; font-size: 12px; color: rgba(180, 255, 150, .55); font-family: "JetBrains Mono", monospace; }
+.card kbd { padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(140, 255, 90, .4); background: rgba(140, 255, 90, .1); font-family: "JetBrains Mono", monospace; font-size: 11px; color: #b6ffb0; }
