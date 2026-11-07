@@ -965,8 +965,10 @@ function renderLive() {
   crown.visible = state.phase === "play" && !!crownOn;
   const el = $("live");
   el.hidden = state.phase !== "play";
-  el.innerHTML = `<div class="panel-head">live ranking</div>${rows.slice(0, 6).map((r, i) =>
-    `<div class="live-row${r.me ? " me" : ""}"><span>${i + 1}. ${escapeHtml(shortName(r.name))}${r.bot ? " <em>bot</em>" : ""}</span><b>${r.score}</b></div>`).join("")}`;
+  const rowHtml = (r, i) => `<div class="live-row${r.me ? " me" : ""}"><span>${i + 1}. ${escapeHtml(shortName(r.name))}${r.bot ? " <em>bot</em>" : ""}</span><b>${r.score}</b></div>`;
+  const myRank = rows.findIndex((r) => r.me);
+  el.innerHTML = `<div class="panel-head">live ranking</div>${rows.slice(0, 5).map(rowHtml).join("")}${
+    myRank >= 5 ? `<div class="live-sep">···</div>${rowHtml(rows[myRank], myRank)}` : ""}`;
 }
 
 function renderHud() {

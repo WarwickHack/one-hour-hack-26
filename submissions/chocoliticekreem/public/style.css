@@ -146,7 +146,6 @@ aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
   #live { top: 50px; right: 8px; width: 112px; padding-bottom: 2px; border-radius: 10px; }
   #live .panel-head { padding: 3px 8px; font-size: 9px; }
   .live-row { font-size: 10px; padding: 0 8px; }
-  .live-row:nth-child(n+5) { display: none; }
   #banner { gap: 6px; }
   #banner h1 { font-size: 30px; }
   #banner .sub { font-size: 12px; max-width: 300px; }
@@ -172,3 +171,4 @@ aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
 #mycd.ready { background: #ff5e4d; color: #fff; }
 #mycd[hidden] { display: none; }
 @media (pointer: coarse) { #mycd { font-size: 10px; padding: 2px 7px; } }
+.live-sep { text-align: center; opacity: .5; font-size: 10px; line-height: 1; }
