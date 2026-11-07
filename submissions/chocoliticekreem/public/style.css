@@ -95,3 +95,4 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 .src { color: #0b1030; font-weight: 800; font-size: 11px; padding: 1px 6px; border-radius: 4px; margin-right: 4px; }
 .ic, svg.lucide { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 3px; stroke-width: 2.4; }
 #file .row span { margin-right: 6px; white-space: nowrap; }
+.survived { font-size: 26px; font-weight: 800; color: #7ee0c3; }

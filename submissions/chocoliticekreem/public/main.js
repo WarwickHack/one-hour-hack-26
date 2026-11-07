@@ -635,11 +635,12 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 }
 
-async function showMenu() {
+async function showMenu(headline = "") {
   const b = $("banner");
   b.classList.remove("spectate");
   b.hidden = false;
   b.innerHTML = `
+    ${headline}
     <h1>LAKE WOXBRIDGE</h1>
     <p class="sub">Every few seconds <b>whack()</b> throws random chaos at you. Survive till midnight.</p>
     <input id="name" maxlength="16" placeholder="duck name" style="font:inherit;padding:10px 14px;border-radius:8px;border:0;text-align:center">
@@ -667,13 +668,18 @@ function start() {
 }
 
 async function end(survived, diedTo) {
-  state.phase = survived ? "won" : "dead";
+  state.phase = survived ? "menu" : "dead";
   state.diedTo = diedTo;
   if (!survived) duck.visible = false;
-  const body = { name: state.name, score: state.score, survived, died_to: diedTo, whacks: state.whacks };
+  const body = { name: state.name, score: state.score, survived, died_to: diedTo, whacks: state.whacks, round: state.round };
   try {
     await fetch("/api/scores", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   } catch { /* leaderboard is a bonus; the game still ends */ }
+  if (survived) {
+    showMenu(`<p class="survived">SURVIVED 🏆 <b>${state.score}</b> pts</p>`);
+    return;
+  }
+  if (state.phase !== "dead") return;
   const b = $("banner");
   b.hidden = false;
   b.classList.add("spectate");

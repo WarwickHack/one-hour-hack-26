@@ -15,7 +15,7 @@ function clean(body) {
     survived: Boolean(body.survived),
     died_to: body.died_to ? String(body.died_to).slice(0, 40) : null,
     whacks: Math.max(0, Math.min(10000, Math.floor(Number(body.whacks) || 0))),
-    round: currentRound(),
+    round: [currentRound(), currentRound() - 1].includes(Number(body.round)) ? Number(body.round) : currentRound(),
   };
 }
 
