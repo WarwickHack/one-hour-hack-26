@@ -96,3 +96,28 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 .ic, svg.lucide { width: 1em; height: 1em; vertical-align: -0.15em; margin-right: 3px; stroke-width: 2.4; }
 #file .row span { margin-right: 6px; white-space: nowrap; }
 .survived { font-size: 26px; font-weight: 800; color: #7ee0c3; }
+
+/* polish */
+body, button, input { font-family: "Fredoka", system-ui, sans-serif; }
+#title { font-size: 20px; letter-spacing: .04em; }
+#clock { font-size: 30px; }
+aside, #controls, #toasts div, #outcome, .side, #banner.spectate .card {
+  background: rgba(15, 20, 52, .72); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.12); box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+#file-panel { border-radius: 16px; }
+#file .row { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+#controls { border-radius: 18px; padding: 10px 14px; }
+#whack-btn { border-radius: 12px; background: linear-gradient(180deg, #ff8f7e, #ff5e4d); color: #fff;
+  box-shadow: 0 4px 0 #b8362a; font-weight: 700; letter-spacing: .02em; transition: transform .08s; }
+#whack-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 #b8362a; }
+#whack-btn:disabled { background: #4a5070; box-shadow: 0 4px 0 #2c3048; color: #c9cde0; }
+#outcome { background: linear-gradient(180deg, #ffe08a, #ffc94a); color: #2a1a00; border: 0; }
+#toasts div.warn { background: rgba(200, 35, 50, .9); }
+.side { border-radius: 16px; }
+.board h3 { color: #7ee0c3; }
+#banner h1 { font-size: 64px; text-shadow: 0 4px 0 #b8862a, 0 10px 30px rgba(0,0,0,.4); }
+#name { font-family: "Fredoka", system-ui, sans-serif; font-size: 20px !important; border-radius: 12px !important;
+  box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+#next { border-radius: 10px; }
+#next-bar { background: linear-gradient(90deg, #ff8f7e, #ffd166); }

@@ -343,12 +343,12 @@ async function doWhack(self) {
   let pondLines;
   let playerLines;
   if (self) {
-    const victim = net.sendWhack(words, (id) => ghosts.get(id)?.userData.target?.alive);
+    const victim = net.sendWhack(words, (id) => ghosts.get(id)?.userData.target?.alive) || whackBot(words);
     addFeed("you", words);
     addPoints(victim ? 30 : 10);
     header = victim
-      ? `${icon("crosshair")} ${escapeHtml(shortName(victim))} ← ${threatChips(words)} · +30`
-      : `${icon("crosshair")} the lake ← ${threatChips(words)} · +10`;
+      ? `${icon("crosshair")} whack() → ${escapeHtml(shortName(victim))} +30`
+      : `${icon("crosshair")} whack() → the lake +10`;
     const me = pond.player;
     pond.player = null;
     pondLines = victim ? [] : pond.applyWhack(words) || [];
@@ -359,8 +359,7 @@ async function doWhack(self) {
     playerLines = state.phase === "play" ? applyToPlayer(c) : [];
     addFeed("server", words);
     if (state.phase === "play") {
-      toast("+10 survived whack()", "score");
-      guide(c).slice(0, 2).forEach((g) => toast(g, "warn"));
+
     }
   }
   if (self) showOutcome(header);
@@ -389,16 +388,16 @@ function onResult({ victim, hearts, died }) {
   const bonus = hearts * 15 + (died ? 100 : 0);
   if (bonus) addPoints(bonus);
   showOutcome(died
-    ? `${icon("skull")} you KO'd ${escapeHtml(shortName(victim))} · +${bonus}`
+    ? `${icon("skull")} You KO'd ${escapeHtml(shortName(victim))}! +${bonus}`
     : hearts
-      ? `${icon("heart-crack")} ${escapeHtml(shortName(victim))} lost ${hearts}♥ · +${bonus}`
+      ? `${icon("heart-crack")} You hit ${escapeHtml(shortName(victim))}! +${bonus}`
       : `${icon("wind")} ${escapeHtml(shortName(victim))} dodged it`);
 }
 
 function onWhacked({ from, fromId, words }) {
   if (state.phase !== "play") return;
   const hpBefore = state.hp;
-  setTimeout(() => {
+  if (fromId) setTimeout(() => {
     net.sendResult(fromId, { hearts: Math.max(0, hpBefore - Math.max(0, state.hp)), died: state.phase === "dead" });
   }, 5000);
   showFile(words.join("\n") + "\n", words, from);
@@ -580,6 +579,55 @@ function updateGhosts(dt) {
   }
 }
 
+const BOT_NAMES = ["Rootes", "SigmaSoc", "W Hack"];
+const bots = BOT_NAMES.map((name) => {
+  const group = buildPlayerDuck(PLAYER_PURPLE);
+  group.add(nameTag(name));
+  group.position.copy(world.randomLakePoint());
+  scene.add(group);
+  return { name, group, heading: Math.random() * Math.PI * 2, hp: MAX_HP, deadUntil: 0, nextWhack: performance.now() + 8000 + Math.random() * 10000 };
+});
+
+function updateBots(dt) {
+  const now = performance.now();
+  for (const b of bots) {
+    if (b.deadUntil && now > b.deadUntil) {
+      b.deadUntil = 0;
+      b.hp = MAX_HP;
+      b.group.position.copy(world.randomLakePoint());
+    }
+    b.group.visible = !b.deadUntil;
+    if (b.deadUntil) continue;
+    b.heading += (Math.random() - 0.5) * 2 * dt;
+    let x = b.group.position.x + Math.sin(b.heading) * 7 * dt;
+    let z = b.group.position.z + Math.cos(b.heading) * 7 * dt;
+    if (!world.isInLake(x, z)) {
+      b.heading += Math.PI;
+      x = b.group.position.x;
+      z = b.group.position.z;
+    }
+    b.group.position.set(x, world.lake.waterY + Math.sin(now / 300 + x) * 0.06, z);
+    b.group.rotation.y = b.heading;
+    if (state.phase === "play" && now > b.nextWhack) {
+      b.nextWhack = now + 15000 + Math.random() * 10000;
+      fetch("/api/whack").then((r) => r.json()).then(({ words }) => onWhacked({ from: b.name, fromId: null, words })).catch(() => {});
+    }
+  }
+}
+
+function whackBot(words) {
+  const alive = bots.filter((b) => !b.deadUntil);
+  if (!alive.length) return null;
+  const b = alive[Math.floor(Math.random() * alive.length)];
+  const c = countWords(words);
+  const hearts = Math.min(b.hp, Math.floor(((c.goose || 0) + (c.honk || 0) + 2 * (c.prod || 0)) / 4));
+  b.hp -= hearts;
+  const died = b.hp <= 0;
+  if (died) b.deadUntil = performance.now() + 10000;
+  setTimeout(() => onResult({ victim: b.name, hearts, died }), 5000);
+  return b.name;
+}
+
 const playerId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 8);
 const net = connect({ id: playerId, name: "lurker", onPos, onLeave, onWhacked, onResult });
 let lastPosSend = 0;
@@ -587,7 +635,7 @@ let lastPosSend = 0;
 pond.onPlayerHit = (kind, by) => {
   if (state.phase !== "play" || state.effects.invuln > 0) return;
   if (state.effects.shield > 0) return;
-  const dmg = kind === "prod" ? 2 : 1;
+  const dmg = 1;
   state.hp -= dmg;
   state.effects.invuln = 1;
   flash(kind === "prod" ? "#ff8a00" : "#ff3b2f");
@@ -766,7 +814,7 @@ function renderHud() {
   const left = Math.ceil((SELF_WHACK_COOLDOWN_MS - (performance.now() - state.lastSelfWhack)) / 1000);
   const btn = $("whack-btn");
   btn.disabled = playing && left > 0;
-  btn.textContent = !playing ? "WHACK()" : left > 0 ? `recharging ${left}s` : net.peers.size ? `WHACK() a duck (${net.peers.size})` : "WHACK()";
+  btn.textContent = !playing ? "WHACK()" : left > 0 ? `recharging ${left}s` : `WHACK() a duck (${net.peers.size + bots.filter((b) => !b.deadUntil).length})`;
   const e = state.effects;
   const fx = playing
     ? [e.slow && `${icon("moon")}slow`, e.fast && `${icon("zap")}fast`, e.shield && `${icon("shield")}shield`,
@@ -790,6 +838,7 @@ function frame() {
   }
   updateGhosts(dt);
   updateDrops(dt);
+  updateBots(dt);
   tagNewEntities();
   fadeTags();
   updateLogos();

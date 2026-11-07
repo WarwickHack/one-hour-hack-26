@@ -11,10 +11,32 @@ const BUG_SCALE = 1.5;
 const RUBBER_SCALE = 1.8;
 const FOOD_SCALE = 1.4;
 
+function sliceGeo() {
+  const sh = new THREE.Shape();
+  sh.moveTo(0.75, 0);
+  sh.lineTo(-0.45, 0.6);
+  sh.lineTo(-0.45, -0.6);
+  sh.closePath();
+  const g = new THREE.ExtrudeGeometry(sh, {
+    depth: 0.1, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 2,
+  });
+  g.rotateX(-Math.PI / 2);
+  return g;
+}
+
 const G = {
   sphere: new THREE.SphereGeometry(0.5, 14, 10),
+  smooth: new THREE.SphereGeometry(0.5, 20, 14),
+  dome: new THREE.SphereGeometry(0.5, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2),
   cone: new THREE.ConeGeometry(0.5, 1, 8),
   cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 12),
+  disc: new THREE.CylinderGeometry(0.5, 0.5, 1, 16),
+  cup: new THREE.CylinderGeometry(0.5, 0.4, 1, 18),
+  capsule: new THREE.CapsuleGeometry(0.5, 1, 4, 10),
+  torus: new THREE.TorusGeometry(0.5, 0.12, 8, 20),
+  handle: new THREE.TorusGeometry(0.5, 0.16, 8, 14, Math.PI),
+  box: new THREE.BoxGeometry(1, 1, 1),
+  slice: sliceGeo(),
   tri: new THREE.CylinderGeometry(0.5, 0.5, 1, 3),
   ring: new THREE.RingGeometry(0.85, 1, 48),
   puff: new THREE.SphereGeometry(0.25, 8, 6),
@@ -23,23 +45,30 @@ const G = {
 };
 
 const std = (color, extra = {}) =>
-  new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0, ...extra });
+  new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0, ...extra });
 
 const M = {
-  duckBody: std(0x8b5a2b),
-  duckHead: std(0x1f7a3a),
-  beak: std(0xff8c1a),
-  eye: std(0x111111),
-  gooseBody: std(0x9c9c9c),
+  duckBody: std(0x8a5a36),
+  duckChest: std(0x7a3b22),
+  duckWing: std(0x9a8f80),
+  duckHead: std(0x14804a, { roughness: 0.3, metalness: 0.15 }),
+  beak: std(0xffa62b),
+  eye: std(0x111111, { roughness: 0.3 }),
+  gooseBody: std(0xa79a88),
+  gooseWing: std(0x7d7063),
+  gooseBelly: std(0xe8e2d6),
   black: std(0x1c1c1c),
   white: std(0xffffff),
-  bug: std(0xd62828),
-  gold: std(0xffd700, { emissive: 0x996600, emissiveIntensity: 0.6, metalness: 0.6, roughness: 0.3 }),
-  rubber: std(0xffdd00, { roughness: 0.35 }),
-  pizza: std(0xf4b142),
-  pepperoni: std(0xb22222),
-  cup: std(0xf5f5f5),
-  coffee: std(0x4b2e1e),
+  bug: std(0xe0262b, { roughness: 0.35 }),
+  gold: std(0xffc62e, { emissive: 0x8a5a00, emissiveIntensity: 0.35, metalness: 0.6, roughness: 0.3 }),
+  rubber: std(0xffd21f, { roughness: 0.25 }),
+  rubberBeak: std(0xff7a1a, { roughness: 0.3 }),
+  pizza: std(0xffc93c),
+  crust: std(0xd28a3c),
+  pepperoni: std(0xc0352b),
+  cup: std(0xf7f4ee),
+  sleeve: std(0xb07a4a),
+  coffee: std(0x3e2316, { roughness: 0.25 }),
   meteor: std(0x5a3a2a, { emissive: 0xff5500, emissiveIntensity: 1.2 }),
 };
 
@@ -79,41 +108,82 @@ function part(parent, geo, mat, s, p, r = [0, 0, 0], shadow = true) {
   return m;
 }
 
+function buildRubberShape(inner) {
+  part(inner, G.smooth, M.rubber, [1.3, 0.8, 1.0], [0, 0.32, 0]);
+  part(inner, G.cone, M.rubber, [0.36, 0.5, 0.4], [-0.62, 0.55, 0], [0, 0, Math.PI / 2 + 0.7]);
+  part(inner, G.smooth, M.rubber, [0.36, 0.22, 0.12], [-0.05, 0.42, 0.48], [0, 0, 0.3]);
+  part(inner, G.smooth, M.rubber, [0.36, 0.22, 0.12], [-0.05, 0.42, -0.48], [0, 0, 0.3]);
+  part(inner, G.smooth, M.rubber, [0.66, 0.64, 0.64], [0.42, 0.95, 0]);
+  part(inner, G.smooth, M.rubberBeak, [0.36, 0.1, 0.32], [0.78, 0.92, 0]);
+  part(inner, G.smooth, M.rubberBeak, [0.3, 0.08, 0.26], [0.75, 0.84, 0], [0, 0, 0], false);
+  part(inner, G.sphere, M.white, [0.14, 0.16, 0.08], [0.62, 1.07, 0.2], [0, -0.5, 0], false);
+  part(inner, G.sphere, M.white, [0.14, 0.16, 0.08], [0.62, 1.07, -0.2], [0, 0.5, 0], false);
+  part(inner, G.sphere, M.eye, [0.08, 0.1, 0.06], [0.66, 1.07, 0.22], [0, -0.5, 0], false);
+  part(inner, G.sphere, M.eye, [0.08, 0.1, 0.06], [0.66, 1.07, -0.22], [0, 0.5, 0], false);
+}
+
 function buildDuckShape(inner, bodyMat, headMat) {
-  part(inner, G.sphere, bodyMat, [1.3, 0.7, 0.85], [0, 0.3, 0]);
-  part(inner, G.cone, bodyMat, [0.3, 0.45, 0.3], [-0.7, 0.45, 0], [0, 0, Math.PI / 2 - 0.5]);
-  part(inner, G.sphere, headMat, [0.5, 0.5, 0.5], [0.5, 0.78, 0]);
-  part(inner, G.cone, M.beak, [0.18, 0.34, 0.14], [0.85, 0.74, 0], [0, 0, -Math.PI / 2]);
-  part(inner, G.sphere, M.eye, [0.08, 0.08, 0.08], [0.68, 0.86, 0.18], [0, 0, 0], false);
-  part(inner, G.sphere, M.eye, [0.08, 0.08, 0.08], [0.68, 0.86, -0.18], [0, 0, 0], false);
+  if (bodyMat === M.rubber) return buildRubberShape(inner);
+  part(inner, G.smooth, bodyMat, [1.35, 0.66, 0.85], [0, 0.3, 0]);
+  part(inner, G.smooth, M.duckChest, [0.6, 0.55, 0.72], [0.42, 0.36, 0]);
+  part(inner, G.smooth, M.duckWing, [0.85, 0.3, 0.2], [-0.12, 0.48, 0.36], [0, 0.12, 0.12]);
+  part(inner, G.smooth, M.duckWing, [0.85, 0.3, 0.2], [-0.12, 0.48, -0.36], [0, -0.12, 0.12]);
+  part(inner, G.cone, M.white, [0.3, 0.42, 0.34], [-0.72, 0.42, 0], [0, 0, Math.PI / 2 + 0.35]);
+  part(inner, G.torus, M.black, [0.16, 0.16, 0.16], [-0.86, 0.68, 0], [0, 0, 0], false);
+  part(inner, G.torus, M.white, [0.38, 0.38, 0.5], [0.5, 0.62, 0], [Math.PI / 2, 0.35, 0], false);
+  part(inner, G.smooth, headMat, [0.52, 0.5, 0.48], [0.56, 0.86, 0]);
+  part(inner, G.smooth, M.beak, [0.34, 0.1, 0.22], [0.86, 0.8, 0], [0, 0, -0.15]);
+  part(inner, G.sphere, M.eye, [0.09, 0.09, 0.09], [0.72, 0.94, 0.19], [0, 0, 0], false);
+  part(inner, G.sphere, M.eye, [0.09, 0.09, 0.09], [0.72, 0.94, -0.19], [0, 0, 0], false);
 }
 
 function buildGooseShape(inner) {
-  part(inner, G.sphere, M.gooseBody, [1.3, 0.75, 0.85], [0, 0.35, 0]);
-  part(inner, G.cone, M.black, [0.3, 0.4, 0.3], [-0.7, 0.5, 0], [0, 0, Math.PI / 2 - 0.5]);
-  part(inner, G.cyl, M.black, [0.16, 0.95, 0.16], [0.5, 0.98, 0], [0, 0, -0.25]);
-  part(inner, G.sphere, M.black, [0.38, 0.3, 0.3], [0.66, 1.46, 0]);
-  part(inner, G.sphere, M.white, [0.2, 0.15, 0.34], [0.63, 1.42, 0], [0, 0, 0], false);
-  part(inner, G.cone, M.black, [0.12, 0.28, 0.12], [0.93, 1.42, 0], [0, 0, -Math.PI / 2]);
+  part(inner, G.smooth, M.gooseBody, [1.4, 0.72, 0.88], [0, 0.35, 0]);
+  part(inner, G.smooth, M.gooseBelly, [1.0, 0.45, 0.78], [0.15, 0.2, 0], [0, 0, 0], false);
+  part(inner, G.smooth, M.gooseWing, [0.95, 0.32, 0.22], [-0.15, 0.52, 0.36], [0, 0.1, 0.15]);
+  part(inner, G.smooth, M.gooseWing, [0.95, 0.32, 0.22], [-0.15, 0.52, -0.36], [0, -0.1, 0.15]);
+  part(inner, G.cone, M.black, [0.32, 0.42, 0.34], [-0.76, 0.5, 0], [0, 0, Math.PI / 2 + 0.3]);
+  part(inner, G.capsule, M.black, [0.15, 0.22, 0.15], [0.5, 0.72, 0], [0, 0, -0.55]);
+  part(inner, G.capsule, M.black, [0.13, 0.24, 0.13], [0.6, 1.05, 0], [0, 0, -0.12]);
+  part(inner, G.capsule, M.black, [0.12, 0.2, 0.12], [0.6, 1.35, 0], [0, 0, 0.2]);
+  part(inner, G.smooth, M.black, [0.4, 0.28, 0.27], [0.68, 1.55, 0]);
+  part(inner, G.smooth, M.white, [0.22, 0.2, 0.3], [0.62, 1.5, 0], [0, 0, 0.3], false);
+  part(inner, G.cone, M.beak, [0.12, 0.3, 0.1], [0.96, 1.53, 0], [0, 0, -Math.PI / 2]);
+  part(inner, G.sphere, M.eye, [0.05, 0.05, 0.05], [0.8, 1.6, 0.12], [0, 0, 0], false);
+  part(inner, G.sphere, M.eye, [0.05, 0.05, 0.05], [0.8, 1.6, -0.12], [0, 0, 0], false);
 }
 
 function buildBugShape(inner) {
-  const body = part(inner, G.sphere, M.bug, [0.7, 0.42, 0.55], [0, 0.2, 0]);
-  part(inner, G.sphere, M.black, [0.3, 0.26, 0.3], [0.38, 0.18, 0]);
-  part(inner, G.cyl, M.black, [0.03, 0.3, 0.03], [0.5, 0.36, 0.08], [0, 0, -0.7], false);
-  part(inner, G.cyl, M.black, [0.03, 0.3, 0.03], [0.5, 0.36, -0.08], [0, 0, -0.7], false);
+  const body = part(inner, G.dome, M.bug, [0.8, 0.6, 0.66], [-0.05, 0.08, 0]);
+  part(inner, G.box, M.black, [0.78, 0.02, 0.03], [-0.05, 0.38, 0], [0, 0, 0], false);
+  const spots = [[0.1, 0.17], [-0.2, 0.2], [0.12, -0.17], [-0.2, -0.2]];
+  for (const [x, z] of spots) {
+    part(inner, G.sphere, M.black, [0.13, 0.06, 0.13], [x, 0.32, z], [0, 0, 0], false);
+  }
+  part(inner, G.smooth, M.black, [0.3, 0.24, 0.32], [0.38, 0.16, 0]);
+  part(inner, G.sphere, M.white, [0.07, 0.07, 0.07], [0.5, 0.21, 0.09], [0, 0, 0], false);
+  part(inner, G.sphere, M.white, [0.07, 0.07, 0.07], [0.5, 0.21, -0.09], [0, 0, 0], false);
+  for (const x of [0.18, -0.05, -0.28]) {
+    for (const side of [1, -1]) {
+      part(inner, G.cyl, M.black, [0.025, 0.22, 0.025], [x, 0.06, side * 0.36], [side * 1.0, 0, 0], false);
+    }
+  }
   return body;
 }
 
 function buildFoodShape(inner, kind) {
   if (kind === "pizza") {
-    part(inner, G.tri, M.pizza, [1.4, 0.12, 1.4], [0, 0.08, 0]);
-    part(inner, G.cyl, M.pepperoni, [0.25, 0.14, 0.25], [0.15, 0.1, 0.2]);
-    part(inner, G.cyl, M.pepperoni, [0.22, 0.14, 0.22], [-0.2, 0.1, -0.1]);
+    part(inner, G.slice, M.pizza, [1, 1, 1], [0, 0.04, 0]);
+    part(inner, G.capsule, M.crust, [0.13, 0.95, 0.13], [-0.5, 0.15, 0], [Math.PI / 2, 0, 0]);
+    part(inner, G.disc, M.pepperoni, [0.22, 0.04, 0.22], [0.2, 0.2, 0.05], [0, 0, 0], false);
+    part(inner, G.disc, M.pepperoni, [0.2, 0.04, 0.2], [-0.2, 0.2, 0.25], [0, 0, 0], false);
+    part(inner, G.disc, M.pepperoni, [0.2, 0.04, 0.2], [-0.15, 0.2, -0.25], [0, 0, 0], false);
   } else {
-    part(inner, G.cyl, M.cup, [0.6, 0.7, 0.6], [0, 0.35, 0]);
-    part(inner, G.cyl, M.coffee, [0.52, 0.02, 0.52], [0, 0.71, 0], [0, 0, 0], false);
-    part(inner, G.cyl, M.cup, [0.08, 0.35, 0.2], [0.33, 0.38, 0], [0, 0, 0], false);
+    part(inner, G.cup, M.cup, [0.62, 0.8, 0.62], [0, 0.4, 0]);
+    part(inner, G.cup, M.sleeve, [0.66, 0.32, 0.66], [0, 0.42, 0]);
+    part(inner, G.disc, M.coffee, [0.56, 0.02, 0.56], [0, 0.78, 0], [0, 0, 0], false);
+    part(inner, G.torus, M.cup, [0.6, 0.6, 0.6], [0, 0.8, 0], [Math.PI / 2, 0, 0], false);
+    part(inner, G.handle, M.cup, [0.24, 0.24, 0.24], [0.3, 0.45, 0], [0, 0, -Math.PI / 2]);
   }
 }
 
@@ -529,7 +599,7 @@ export class Pond {
     mesh.visible = false;
     this.scene.add(mesh);
     const marker = new THREE.Mesh(
-      new THREE.RingGeometry(2.2, 3, 32),
+      new THREE.RingGeometry(3.8, 4.5, 40),
       new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }),
     );
     marker.rotation.x = -Math.PI / 2;
@@ -558,9 +628,8 @@ export class Pond {
       this.ring(target, 0xffffff, 16, 1.6);
       this.ring(target, 0xff8800, 9, 1.1);
       this.puff(new THREE.Vector3(target.x, this.waterY + 0.5, target.z), 0xffffff, 18, 3, 1.1);
-      this.floatText("500", new THREE.Vector3(target.x, 5, target.z), "#ff5533", 8, 2.2);
       for (const v of victims) if (!v.removed) this.removeEntity(v, 0xff9944, 6);
-      if (this.player && this.player.position && this.xzDist(this.player.position, target) < 3) {
+      if (this.player && this.player.position && this.xzDist(this.player.position, target) < 4.5) {
         this.onPlayerHit?.("prod", "PROD");
       }
       return false;
