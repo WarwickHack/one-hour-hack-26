@@ -38,6 +38,33 @@ orbit.maxPolarAngle = Math.PI * 0.47;
 
 const world = buildWorld(scene);
 const pond = new Pond(scene, world);
+
+let audio = null;
+function sfx(kind) {
+  try {
+    audio = audio || new AudioContext();
+    const t = audio.currentTime;
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    o.connect(g).connect(audio.destination);
+    const tones = {
+      quack: ["sawtooth", 520, 260, 0.18],
+      hit: ["square", 160, 60, 0.25],
+      pickup: ["sine", 880, 1320, 0.12],
+      logo: ["triangle", 660, 1760, 0.3],
+      ko: ["triangle", 440, 1100, 0.35],
+    };
+    const [type, f0, f1, dur] = tones[kind];
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t);
+    o.stop(t + dur);
+  } catch { /* sound is a bonus */ }
+}
+let shake = 0;
 const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
 function sharpenTextures() {
   scene.traverse((o) => {
@@ -339,6 +366,7 @@ function updateLogos() {
     const grabbed = state.phase === "play" && g.position.distanceTo(duck.position) < 2.6;
     if (grabbed) {
       addPoints(50);
+      sfx("logo");
       toast(`${icon("trophy")} ${g.userData.word} +50`, "score");
       world.logoBurst?.(g.userData.word);
     }
@@ -412,6 +440,7 @@ function showOutcome(text) {
 function onResult({ victim, hearts, died }) {
   const bonus = hearts * 15 + (died ? 100 : 0);
   if (bonus) addPoints(bonus);
+  if (died) sfx("ko");
   showOutcome(died
     ? `${icon("skull")} You KO'd ${escapeHtml(shortName(victim))}! +${bonus}`
     : hearts
@@ -689,6 +718,8 @@ pond.onPlayerHit = (kind, by) => {
   state.effects.invuln = 1;
   flash(kind === "prod" ? "#ff8a00" : "#ff3b2f");
   toast(kind === "prod" ? `${icon("flame")} hit −${dmg} ♥` : `${icon("bird")} bitten −${dmg} ♥`, "warn");
+  sfx("hit");
+  shake = 0.35;
   if (state.hp <= 0) end(false, kind === "prod" ? "a PROD meteor" : by);
 };
 
@@ -696,11 +727,13 @@ pond.onPlayerPickup = (kind) => {
   if (state.phase !== "play") return;
   if (kind === "bug") { addPoints(10); log(["🐛 you ate a bug (+10)"], "you"); }
   if (kind === "feature") { addPoints(50); log(["✨ you ate a FEATURE (+50)"], "you"); }
+  sfx("pickup");
   if (kind === "pizza") { addPoints(25); state.hp = Math.min(MAX_HP, state.hp + 1); log(["🍕 +25 · +1 ❤"], "you"); }
   if (kind === "coffee") { addPoints(25); state.effects.fast = Math.max(state.effects.fast, 4); log(["☕ +25 · speed"], "you"); }
 };
 
 function selfWhack() {
+  sfx("quack");
   const now = performance.now();
   if (state.phase !== "play" || now - state.lastSelfWhack < SELF_WHACK_COOLDOWN_MS) return;
   state.lastSelfWhack = now;
@@ -875,6 +908,11 @@ function updateCamera(dt) {
     camTarget.copy(camera.position).addScaledVector(fwd, 10).add(new THREE.Vector3(0, -0.6, 0));
   }
   duck.userData.head.visible = state.camMode !== "first";
+  if (shake > 0) {
+    shake = Math.max(0, shake - dt);
+    camera.position.x += (Math.random() - 0.5) * shake * 2;
+    camera.position.y += (Math.random() - 0.5) * shake * 2;
+  }
   camera.lookAt(camTarget);
   orbit.target.copy(duck.position);
 }
