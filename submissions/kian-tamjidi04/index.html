@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whackschach</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* A psychologist's case file. Ink plate on a white card at left, typed case notes at right, letter tape and earlier plates below. */
+:root {
+  color-scheme: light;
+  --desk: #d6dadd;
+  --card: #fbfbf8;
+  --file: #eef0ec;
+  --ink: #15161c;
+  --ink-soft: #565a63;
+  --rule: #b9bec4;
+  --red: #c4262e;
+  --c-event: #2b4fb3;
+  --c-sponsor: #946600;
+  --c-bird: #0f7a6c;
+  --c-bug: #c4262e;
+  --c-git: #6a3fb5;
+  --c-life: #c0560f;
+  --c-unknown: #4a4d55;
+  --f-display: "Spectral", Georgia, serif;
+  --f-type: "Courier Prime", "Courier New", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--desk); color: var(--ink); font: 15px/1.5 var(--f-display); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 28px 16px 56px; display: grid; gap: 26px; }
+.wrap > * { min-width: 0; }
+header { display: grid; gap: 4px; }
+.eyebrow { font: 700 .74rem var(--f-type); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+h1 { font-weight: 600; font-style: italic; font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1; margin: 0; letter-spacing: -.01em; }
+.lede { margin: 6px 0 0; max-width: 66ch; color: var(--ink-soft); }
+.lede code, .type { font-family: var(--f-type); }
+h2 { font: 600 1.35rem var(--f-display); margin: 0; }
+
+.session { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .session { grid-template-columns: minmax(0, 1fr); } }
+.plate { background: var(--card); border: 1px solid var(--rule); border-radius: 2px; box-shadow: 0 1px 0 var(--rule), 0 12px 28px -18px rgba(21,22,28,.45);
+  aspect-ratio: 4 / 3; width: 100%; position: relative; }
+#blot { width: 100%; height: 100%; display: block; }
+.plate .no { position: absolute; top: 10px; left: 14px; font: 700 .8rem var(--f-type); letter-spacing: .1em; color: var(--ink-soft); }
+
+.notes { background: var(--file); border: 1px solid var(--rule); border-radius: 2px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.notes > * { min-width: 0; }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: 700 .88rem var(--f-type); padding: 10px 14px; border-radius: 2px; cursor: pointer; border: 1.5px solid var(--ink); }
+#go { background: var(--ink); color: var(--card); }
+#shuffle { background: transparent; color: var(--ink); }
+button:hover { filter: contrast(1.2); }
+button:disabled { opacity: .55; cursor: progress; }
+button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.field { display: grid; gap: 4px; }
+.field > span { font: 700 .72rem var(--f-type); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-soft); }
+.words { display: flex; flex-wrap: wrap; gap: 6px; max-height: 9.5rem; overflow-y: auto; }
+.chip { font: .82rem var(--f-type); padding: 1px 7px; border: 1px solid var(--c); color: var(--c); background: var(--card); }
+.reading { font: italic 1.12rem/1.45 var(--f-display); margin: 0; }
+.stub { font: .74rem var(--f-type); color: var(--ink-soft); margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.stats div { display: grid; }
+.stats b { font: 700 1.15rem var(--f-type); font-variant-numeric: tabular-nums; }
+.stats small { font: .7rem var(--f-type); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+.transcript { margin: 0; font: .78rem/1.35 var(--f-type); background: var(--card); border: 1px solid var(--rule); padding: 8px 10px;
+  max-height: 8.6rem; overflow: auto; white-space: pre; counter-reset: ln; }
+.transcript span { display: block; }
+.transcript span::before { counter-increment: ln; content: counter(ln); display: inline-block; width: 3ch; margin-right: 1.2ch; text-align: right; color: var(--rule); }
+.check { font: .72rem var(--f-type); color: var(--ink-soft); }
+.check.ok::before { content: "✓ "; color: var(--c-bird); font-weight: 700; }
+.check.bad::before { content: "✗ "; color: var(--red); font-weight: 700; }
+.error { color: var(--red); font: .8rem var(--f-type); margin: 0; }
+
+.tapebox { overflow-x: auto; background: var(--card); border: 1px solid var(--rule); border-radius: 2px; max-width: 100%; }
+.tape { display: flex; padding: 10px; width: max-content; }
+.l { display: grid; justify-items: center; gap: 2px; width: 34px; padding: 4px 0 2px; font-family: var(--f-type); font-variant-numeric: tabular-nums;
+  color: var(--c, var(--ink)); background: color-mix(in srgb, var(--c, var(--ink)) 11%, var(--card)); border-top: 3px solid var(--c, var(--ink)); }
+.cats { display: flex; flex-wrap: wrap; gap: 6px 16px; font: .8rem var(--f-type); }
+.cats span::before { content: ""; display: inline-block; width: 16px; height: 5px; background: var(--c); margin-right: 6px; vertical-align: middle; }
+.l .ch { font-weight: 700; font-size: 1rem; }
+.l .cd { font-size: .66rem; color: var(--ink-soft); }
+.l svg { width: 18px; height: 18px; }
+.l.gap { width: 18px; border-left: 1px dashed var(--rule); margin-left: 8px; background: none; border-top: 0; padding: 0; }
+.note { margin: 0; color: var(--ink-soft); font-size: .92rem; max-width: 72ch; }
+.example { border-left: 3px solid var(--c-bird); background: var(--card); padding: 10px 12px; max-width: 82ch; }
+.example > span { display: block; margin-bottom: 4px; font: 700 .72rem var(--f-type); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.example p { margin: 0; }
+.example code, .mechanics code { font-family: var(--f-type); }
+.mechanics { background: var(--card); border: 1px solid var(--rule); padding: 9px 11px; max-width: 82ch; }
+.mechanics summary { cursor: pointer; font: 700 .72rem var(--f-type); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.mechanics ul { display: grid; gap: 5px; margin: 9px 0 2px; padding-left: 1.3rem; }
+
+.history { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.mini { background: var(--card); border: 1px solid var(--rule); border-radius: 2px; padding: 6px; display: grid; gap: 4px; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; }
+.mini canvas { width: 100%; aspect-ratio: 4 / 3; display: block; }
+.mini span { font: .7rem var(--f-type); color: var(--ink-soft); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Case file · WHACK 26 · 42-word vocabulary · 1–100 words per call</span>
+    <h1>Whackschach</h1>
+    <p class="lede">A random word list becomes a mirrored inkblot, one letter at a time.</p>
+  </header>
+
+  <section class="session">
+    <div class="plate"><canvas id="blot" aria-label="Inkblot drawn from the latest call"></canvas><span class="no" id="plateno">PLATE I</span></div>
+    <div class="notes" aria-live="polite">
+      <div class="buttons">
+        <button id="go" type="button">Generate new inkblot</button>
+        <button id="shuffle" type="button">Same words, new order</button>
+      </div>
+      <p class="error" id="err" hidden></p>
+      <div class="field"><span>Words returned</span><div class="words" id="words"></div></div>
+      <div class="stats">
+        <div><b id="sN">–</b><small>words</small></div>
+        <div><b id="sL">–</b><small>letters</small></div>
+        <div><b id="sS">–</b><small>ASCII sum</small></div>
+        <div><b id="sT">–</b><small>net turn</small></div>
+      </div>
+      <div class="field"><span>Inkblot reading</span><p class="reading" id="reading"></p></div>
+      <p class="stub" id="stub">Stand-in examiner, reading the blot's shape and inks.</p>
+      <div class="field"><span>File written · ./whack</span><pre class="transcript" id="file"></pre><small class="check" id="check"></small></div>
+    </div>
+  </section>
+
+  <section class="field">
+    <h2>Letter tape</h2>
+    <p class="note">Each tile shows a letter's ASCII code and turn. Read left to right: the letters steer the pen, each word's category sets its ink, and a splat marks its end. The path is mirrored across the fold.</p>
+    <div class="example"><span>Worked example · <code>duck</code></span><p><code>duck</code> is bird-category ink. Its letter codes sum to 423, so the pen first turns +63° (423 mod 360). Then <code>d</code>, <code>u</code>, <code>c</code>, <code>k</code> turn −57°, +45°, −63°, −15° and move 10, 16, 8, 10 units. The word ends with an ink splat.</p></div>
+    <details class="mechanics"><summary>Exact drawing rules</summary><ul>
+      <li>Before each word, turn by the sum of its letter codes modulo 360°.</li>
+      <li>For a letter with code <code>c</code>: turn by <code>(c − 109.5) × 6°</code>, move <code>6 + 2 × (c mod 7)</code> units, and use stroke width <code>2 + (c mod 5)</code>.</li>
+      <li>At each word's end, add a category-colored splat. Fit the path to half the plate and thin the ink on longer calls.</li>
+    </ul></details>
+    <div class="cats" id="cats"></div>
+    <div class="tapebox"><div class="tape" id="tape"></div></div>
+  </section>
+
+  <section class="field">
+    <h2>Earlier plates</h2>
+    <div class="history" id="history"></div>
+  </section>
+</div>
+
+<script>
+(async () => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+const ascii = w => [...w].reduce((a, c) => a + c.charCodeAt(0), 0);
+const roman = n => { if (n > 39) return String(n); const m = [[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]]; let s = "", r = n; for (const [v, k] of m) while (r >= v) { s += k; r -= v; } return s; };
+function seeded(seed) { let a = seed | 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// Categories come from categories.ts via the server; colours there win over the CSS defaults.
+let CATS = {}, CAT = {}, vision = false;
+try {
+  const meta = await (await fetch("/categories")).json();
+  vision = meta.vision;
+  for (const [k, c] of Object.entries(meta.categories)) {
+    CATS[k] = c.name;
+    document.documentElement.style.setProperty(`--c-${k}`, c.color);
+    c.words.forEach(w => CAT[w] = k);
+  }
+  document.documentElement.style.setProperty("--c-unknown", meta.neutral);
+} catch { $("err").hidden = false; $("err").textContent = "Couldn't reach the server. Start it with: bun server.ts"; }
+const warned = new Set();
+const catOf = w => {
+  if (CAT[w]) return CAT[w];
+  if (!warned.has(w)) { warned.add(w); console.warn(`[whackschach] no category for "${w}", using neutral ink`); }
+  return "unknown";
+};
+const inkOf = {};
+const ink = cat => inkOf[cat] ??= getComputedStyle(document.documentElement).getPropertyValue(`--c-${cat}`).trim() || "#4a4d55";
+$("cats").innerHTML = Object.entries(CATS).map(([k, n]) => `<span style="--c:var(--c-${k})">${esc(n)}</span>`).join("");
+
+// Turtle walk (the core): a new word swings the heading by its ASCII sum, letters steer, word ends drop ink.
+function walk(words) {
+  let x = 0, y = 0, h = -90, net = 0;
+  const items = [];
+  for (const w of words) {
+    const cat = catOf(w);
+    h += ascii(w) % 360;
+    for (const ch of w) {
+      const c = ch.charCodeAt(0), turn = (c - 109.5) * 6;
+      h += turn; net += turn;
+      const step = 6 + 2 * (c % 7), r = h * Math.PI / 180;
+      const nx = x + Math.cos(r) * step, ny = y + Math.sin(r) * step;
+      items.push({ seg: true, x0: x, y0: y, x1: nx, y1: ny, w: 2 + (c % 5), cat });
+      x = nx; y = ny;
+    }
+    items.push({ seg: false, x, y, r: 3 + w.length * 2.2, cat });
+  }
+  return { items, net };
+}
+
+// Fit the walk into the left half (right edge on the fold) and work out how thick the ink can be.
+function layout(W, H, words) {
+  const { items } = walk(words);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  const grow = (x, y) => { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); };
+  items.forEach(it => it.seg ? (grow(it.x0, it.y0), grow(it.x1, it.y1)) : grow(it.x, it.y));
+  const pad = Math.max(10, W * .06), half = W / 2;
+  const k = Math.min((half - pad * 1.2) / Math.max(maxX - minX, 1), (H - pad * 2) / Math.max(maxY - minY, 1), 6);
+  const ox = half - pad * .1 - (maxX - minX) * k, oy = (H - (maxY - minY) * k) / 2;
+  const X = v => ox + (v - minX) * k, Y = v => oy + (v - minY) * k;
+  const base = Math.max(.55, Math.min(2.2, k / 2.4)) * W / 600;
+
+  // Scale: estimate how much of the half-plate the ink would cover at full strength and thin it out
+  // when a big call would turn into a solid square. Strokes scale linearly, splats by sqrt (same area).
+  let area = 0;
+  for (const it of items) area += it.seg ? Math.hypot(it.x1 - it.x0, it.y1 - it.y0) * k * it.w * base * 2.4 : Math.PI * (it.r * base * .8) ** 2 * 1.6;
+  const thin = Math.max(.16, Math.min(1, (.24 * half * H) / Math.max(area, 1)));
+  const rnd = seeded(words.reduce((a, w) => a * 31 + ascii(w), 7));
+  const stroke = base * Math.pow(thin, .85), splat = base * Math.pow(thin, 1.1);
+  const draw = items.map(it => it.seg
+    ? { seg: true, c: it.cat, a: X(it.x0), b: Y(it.y0), e: X(it.x1), f: Y(it.y1), lw: Math.max(.9, it.w * stroke * (1.6 + rnd() * 1.6)) }
+    : { seg: false, c: it.cat, blobs: Array.from({ length: 5 }, () => {
+        const rr = it.r * splat * (.45 + rnd() * .7), an = rnd() * 6.3, dd = it.r * splat * rnd() * .8;
+        return { x: X(it.x) + Math.cos(an) * dd, y: Y(it.y) + Math.sin(an) * dd, r: Math.max(1, rr), al: .55 + rnd() * .35 };
+      }) });
+  return { draw, blur: 6 * base * Math.sqrt(thin), thin, aspect: (maxY - minY) / Math.max(maxX - minX, 1), extentX: (maxX - minX) * k / half, extentY: (maxY - minY) * k / H };
+}
+
+// Painter: draws items [from, to) onto a persistent half-sheet, then mirrors it onto the visible canvas.
+function painter(cv, words) {
+  const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1;
+  cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d));
+  const L = layout(r.width, r.height, words);
+  const off = document.createElement("canvas"); off.width = cv.width; off.height = cv.height;
+  const o = off.getContext("2d"); o.setTransform(d, 0, 0, d, 0, 0);
+  o.lineCap = "round"; o.lineJoin = "round"; o.shadowBlur = L.blur;
+  const ctx = cv.getContext("2d");
+  let done = 0;
+  return {
+    L, total: L.draw.length,
+    to(n) {
+      for (; done < Math.min(n, L.draw.length); done++) {
+        const it = L.draw[done], c = ink(it.c);
+        o.shadowColor = c;
+        if (it.seg) { o.strokeStyle = c; o.globalAlpha = .82; o.lineWidth = it.lw; o.beginPath(); o.moveTo(it.a, it.b); o.lineTo(it.e, it.f); o.stroke(); }
+        else { o.fillStyle = c; for (const b of it.blobs) { o.globalAlpha = b.al; o.beginPath(); o.arc(b.x, b.y, b.r, 0, 7); o.fill(); } }
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(off, 0, 0);
+      ctx.save(); ctx.translate(cv.width, 0); ctx.scale(-1, 1); ctx.drawImage(off, 0, 0); ctx.restore();
+    },
+  };
+}
+const paint = (cv, words) => { const p = painter(cv, words); p.to(p.total); return p.L; };
+
+// Stand-in examiner: dominant ink picks the subject, the blot's proportions pick the pose.
+const SUBJECTS = {
+  bird: ["a goose in a defensive posture", "two ducks facing each other across a desk", "a heron in a lab coat", "a rubber duck that has seen things"],
+  life: ["a pizza with ambitions", "a spilled cup of coffee", "a waiter in distress", "a clock stuck at five to midnight", "a judge holding a prize"],
+  git: ["a server rack", "a merge conflict with legs", "two branches refusing to meet", "a rocket on a Friday deploy"],
+  bug: ["a moth trapped in a terminal", "a stack trace with teeth", "a beetle made of semicolons", "a pointer pointing at nothing"],
+  sponsor: ["a trading floor at closing bell", "a stock chart with teeth", "a man in a very good suit", "a lanyard shaped like a crown"],
+  event: ["a mallet mid-swing", "a hackathon banner in the wind", "a lecture theatre at 3am", "a crowd around one laptop"],
+  unknown: ["something I can't name", "a shape I won't put in the notes"],
+};
+const SECOND = { bird: "There is a honk at the edges.", life: "Traces of pizza at the margins.", git: "Something has been force-pushed.", bug: "A thread of red runs underneath.", sponsor: "A sponsor watches from the edge.", event: "The event is never far away.", unknown: "Some ink here has no name." };
+function read(words, L) {
+  const counts = {}; words.forEach(w => { const c = catOf(w); counts[c] = (counts[c] || 0) + 1; });
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const [top] = ranked[0], second = ranked[1]?.[0];
+  const rnd = seeded(words.length * 97 + Math.round(L.aspect * 1000));
+  const subj = SUBJECTS[top][Math.floor(rnd() * SUBJECTS[top].length)];
+  const pose = L.aspect > 1.4 ? "standing on its hind legs" : L.aspect < .7 ? "with its wings spread wide" : L.extentX > .8 ? "pressing against the fold" : "curled up, guarding something";
+  let s = `I see ${subj}, ${pose}.`;
+  const bugShare = (counts.bug || 0) / words.length;
+  if (bugShare >= .25 && top !== "bug") s += " The red suggests an unresolved incident in production.";
+  else if (words.length >= 60) s += " The density points to an overcaffeinated subject.";
+  else if (words.length <= 2) s += " A sparse response. The subject may be asleep.";
+  else if (second && counts[second] / words.length >= .2) s += ` ${SECOND[second]}`;
+  else s += " The symmetry is reassuring. Mostly.";
+  return s;
+}
+
+// Optional: Claude's reading of the image alone. Silently keeps the stand-in on any failure.
+let readToken = 0;
+async function askClaude(cv) {
+  if (!vision) return;
+  const token = ++readToken;
+  try {
+    const small = document.createElement("canvas"), s = Math.min(1, 800 / cv.width);
+    small.width = Math.round(cv.width * s); small.height = Math.round(cv.height * s);
+    const g = small.getContext("2d"); g.fillStyle = "#fbfbf8"; g.fillRect(0, 0, small.width, small.height); g.drawImage(cv, 0, 0, small.width, small.height);
+    const res = await fetch("/read", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ png: small.toDataURL("image/png") }) });
+    const { reading } = await res.json();
+    if (reading && token === readToken) { $("reading").textContent = reading; $("stub").textContent = "Examiner: Claude, shown only the image. It never sees the words."; }
+  } catch {}
+}
+
+const blot = $("blot");
+let plate = 0, current = null, history = [], anim = 0;
+
+function arrow(turn) {
+  return `<svg viewBox="-10 -10 20 20" aria-hidden="true"><g transform="rotate(${turn.toFixed(0)})" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M0 7 V-6 M-4 -2 L0 -6 L4 -2"/></g></svg>`;
+}
+
+// rec = { words, file, plate, from }: from is the plate whose whack() call produced the file.
+function show(rec, animate, record = true) {
+  current = rec;
+  if (record) { rec.plate = ++plate; rec.from ??= rec.plate; history.unshift(rec); history = history.slice(0, 8); }
+  const { words } = rec;
+  const { net } = walk(words);
+  $("plateno").textContent = `PLATE ${roman(rec.plate)}`;
+  $("words").innerHTML = words.map(w => `<span class="chip" style="--c:var(--c-${catOf(w)})">${esc(w)}</span>`).join("");
+  $("sN").textContent = words.length;
+  $("sL").textContent = words.join("").length;
+  $("sS").textContent = words.reduce((a, w) => a + ascii(w), 0).toLocaleString();
+  $("sT").textContent = `${Math.round(net).toLocaleString()}°`;
+  $("tape").innerHTML = words.map((w, i) => (i ? `<div class="l gap"></div>` : "") + [...w].map(ch => {
+    const c = ch.charCodeAt(0), t = (c - 109.5) * 6, cat = catOf(w);
+    return `<div class="l" style="--c:var(--c-${cat})" title="${esc(w)} · ${esc(CATS[cat] || "Unknown")}"><span class="ch">${esc(ch)}</span><span class="cd">${c}</span>${arrow(t)}</div>`;
+  }).join("")).join("");
+  $("tape").parentElement.scrollLeft = 0;
+  showFile(rec);
+  renderHistory();
+
+  cancelAnimationFrame(anim);
+  const p = painter(blot, words);
+  $("reading").textContent = read(words, p.L);
+  $("stub").textContent = vision ? "Stand-in reading while Claude looks at the image…" : "Stand-in examiner, reading the blot's shape and inks.";
+  if (!animate || matchMedia("(prefers-reduced-motion: reduce)").matches) { p.to(p.total); askClaude(blot); return; }
+  const start = performance.now(), dur = Math.min(2400, 700 + p.total * 4);
+  const tick = now => {
+    const t = Math.min(1, (now - start) / dur);
+    p.to(Math.ceil(p.total * (1 - Math.pow(1 - t, 2))));
+    if (t < 1) anim = requestAnimationFrame(tick); else askClaude(blot);
+  };
+  anim = requestAnimationFrame(tick);
+}
+
+// The raw whack file, line by line, checked against what whack() returned.
+function showFile(rec) {
+  const lines = rec.file.replace(/\n$/, "").split("\n");
+  $("file").innerHTML = lines.map(l => `<span>${esc(l)}</span>`).join("");
+  $("file").scrollTop = 0;
+  const src = history.find(h => h.plate === rec.from) || rec;
+  const same = lines.length === src.call.length && lines.every((l, i) => l === src.call[i]);
+  const bytes = new Blob([rec.file]).size;
+  const el = $("check");
+  el.className = `check ${same ? "ok" : "bad"}`;
+  el.textContent = `${lines.length} line${lines.length === 1 ? "" : "s"} · ${bytes} bytes · ` + (same ? "matches whack()'s return value" : "does not match whack()'s return value") +
+    (rec.from !== rec.plate ? ` · written for plate ${roman(rec.from)}, words reordered since` : "");
+}
+
+function renderHistory() {
+  const box = $("history"); box.innerHTML = "";
+  history.forEach(h => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "mini";
+    b.innerHTML = `<canvas></canvas><span>${roman(h.plate)} · ${h.words.length} word${h.words.length === 1 ? "" : "s"} · ${esc(h.words.join(" "))}</span>`;
+    b.addEventListener("click", () => show(h, true, false));
+    box.append(b);
+    paint(b.querySelector("canvas"), h.words);
+  });
+}
+
+async function callWhack() {
+  const res = await fetch("/whack");
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const { words, file } = await res.json();
+  return { words, file, call: words };
+}
+
+async function go() {
+  $("go").disabled = true; $("err").hidden = true;
+  try {
+    const rec = await callWhack();
+    show(rec, true);
+  } catch (e) {
+    $("err").hidden = false; $("err").textContent = `whack() didn't answer (${e.message}). Is bun server.ts running?`;
+  } finally { $("go").disabled = false; }
+}
+
+$("go").addEventListener("click", go);
+$("shuffle").addEventListener("click", () => {
+  if (!current) return;
+  const w = [...current.words];
+  for (let i = w.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [w[i], w[j]] = [w[j], w[i]]; }
+  show({ words: w, file: current.file, call: current.call, from: current.from }, true);
+});
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (current) { cancelAnimationFrame(anim); paint(blot, current.words); } renderHistory(); }, 120); });
+
+// Open in a working state: three real calls, so there are earlier plates to compare.
+try {
+  for (let i = 0; i < 3; i++) { show(await callWhack(), false); }
+  document.fonts?.ready.then(() => { if (current) paint(blot, current.words); renderHistory(); });
+} catch (e) {
+  $("err").hidden = false; $("err").textContent = `whack() didn't answer (${e.message}). Is bun server.ts running?`;
+}
+})();
+</script>
+</body>
+</html>
