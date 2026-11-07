@@ -421,7 +421,7 @@ def breed_cli(target):
     try:
         for ev in evolve(target, rng):
             if ev["type"] == "restart":
-                note = f"gen {ev['gen']:,}: stuck on {show(ev['stuck_on'])!r}. Honk! The goose scatters the flock."
+                note = f"gen {ev['gen']:,}: stuck on {show(ev['stuck_on'])[:30]!r}. Honk! The goose scatters the flock."
                 if not TTY:
                     print(note)
             elif ev["type"] == "gen" and time.time() - last > 0.08:
