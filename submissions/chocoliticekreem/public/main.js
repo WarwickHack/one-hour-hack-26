@@ -286,10 +286,11 @@ function spawnLogo(word, slug) {
   const g = new THREE.Group();
   const card = new THREE.Mesh(
     new THREE.PlaneGeometry(3.2, 1.6),
-    new THREE.MeshBasicMaterial({ map: logoTexture(slug), side: THREE.DoubleSide }),
+    new THREE.MeshBasicMaterial({ map: logoTexture(slug), side: THREE.DoubleSide, transparent: true }),
   );
   const backing = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 1.9), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
   backing.position.z = -0.02;
+  card.position.z = 0.02;
   card.position.y = backing.position.y = 2.2;
   const glow = new THREE.Mesh(glowGeo, glowMats.good);
   glow.rotation.x = -Math.PI / 2;
