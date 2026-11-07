@@ -1,8 +1,8 @@
 // Leaderboard: Supabase when SUPABASE_URL + SUPABASE_KEY are set (hosted), in-memory otherwise (local).
-// Rounds are shared 3-minute wall-clock windows, so every duck online plays the same round.
+// Rounds are shared 1-minute wall-clock windows, so every duck online plays the same round.
 const URL = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_KEY;
-const ROUND_MS = 180000;
+const ROUND_MS = 60000;
 const memory = [];
 
 const currentRound = () => Math.floor(Date.now() / ROUND_MS);

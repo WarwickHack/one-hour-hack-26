@@ -10,7 +10,7 @@ const SELF_WHACK_COOLDOWN_MS = 10000;
 const POS_SEND_MS = 250;
 const BUFFS = new Set(["coffee", "rubber", "null", "pizza"]);
 const DEADLINE = 90;
-const ROUND_MS = 180000;
+const ROUND_MS = 60000;
 const currentRound = () => Math.floor(Date.now() / ROUND_MS);
 const roundFrac = () => (Date.now() % ROUND_MS) / ROUND_MS;
 const MAX_HP = 5;
@@ -289,8 +289,11 @@ function spawnLogo(word, slug) {
     new THREE.MeshBasicMaterial({ map: logoTexture(slug), side: THREE.DoubleSide, transparent: true }),
   );
   const backing = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 1.9), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-  backing.position.z = -0.02;
+  backing.position.z = 0;
   card.position.z = 0.02;
+  const cardBack = card.clone();
+  cardBack.position.z = -0.02;
+  cardBack.rotation.y = Math.PI;
   card.position.y = backing.position.y = 2.2;
   const glow = new THREE.Mesh(glowGeo, glowMats.good);
   glow.rotation.x = -Math.PI / 2;
@@ -298,9 +301,9 @@ function spawnLogo(word, slug) {
   const tag = wordTag(`${word} +50`, "good");
   tag.position.y = 3.3;
   tags.push(tag);
-  g.add(backing, card, glow, tag);
+  g.add(backing, card, glow, tag, cardBack);
   g.position.copy(world.randomLakePoint());
-  g.userData = { slug, word, born: performance.now() };
+  g.userData = { slug, word, born: performance.now(), cards: [backing, card, cardBack] };
   scene.add(g);
   logos.push(g);
 }
@@ -310,7 +313,7 @@ function updateLogos() {
   for (let i = logos.length - 1; i >= 0; i--) {
     const g = logos[i];
     g.rotation.y += 0.02;
-    g.children[0].position.y = g.children[1].position.y = 2.2 + Math.sin(now / 300 + i) * 0.25;
+    for (const m of g.userData.cards) m.position.y = 2.2 + Math.sin(now / 300 + i) * 0.25;
     const grabbed = state.phase === "play" && g.position.distanceTo(duck.position) < 2.6;
     if (grabbed) {
       addPoints(50);
@@ -553,18 +556,37 @@ function onLeave(id) {
   if (g) { scene.remove(g); ghosts.delete(id); }
 }
 function nameTag(text) {
+  const label = shortName(text);
   const c = document.createElement("canvas");
-  c.width = 256; c.height = 64;
+  c.width = 512; c.height = 128;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "rgba(11,16,48,.75)";
-  ctx.fillRect(0, 8, 256, 48);
+  ctx.font = "600 56px Fredoka, system-ui, sans-serif";
+  const w = Math.min(480, ctx.measureText(label).width + 110);
+  const x0 = (512 - w) / 2;
+  ctx.shadowColor = "rgba(0,0,0,.35)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = "rgba(15,20,52,.82)";
+  ctx.beginPath();
+  ctx.roundRect(x0, 18, w, 84, 42);
+  ctx.fill();
+  ctx.shadowColor = "transparent";
   ctx.fillStyle = playerColor(text);
-  ctx.font = "bold 30px monospace";
-  ctx.textAlign = "center";
-  ctx.fillText(shortName(text), 128, 43);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false }));
-  s.scale.set(4, 1, 1);
-  s.position.y = 2.6;
+  ctx.beginPath();
+  ctx.arc(x0 + 44, 60, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x0 + 70, 62);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+  mat.userData.outlineParameters = { visible: false };
+  const s = new THREE.Sprite(mat);
+  s.scale.set(3.6, 0.9, 1);
+  s.position.y = 2.7;
   return s;
 }
 function updateGhosts(dt) {
@@ -718,6 +740,7 @@ function start() {
   $("banner").hidden = true;
   $("toasts").innerHTML = "";
   state.nextAuto = performance.now() + 1500;
+  state.joinedAt = performance.now();
   bots.forEach((b, i) => { b.nextWhack = performance.now() + 10000 + i * 7000; b.score = 0; });
 }
 
@@ -760,6 +783,29 @@ addEventListener("keyup", (ev) => keys.delete(ev.key.toLowerCase()));
 addEventListener("blur", () => keys.clear());
 $("whack-btn").addEventListener("click", () => (state.phase === "play" ? selfWhack() : doWhack(false)));
 
+const PLAYER_RADIUS = 1.1;
+function bump(x, z, pos, r) {
+  const dx = pos.x - x;
+  const dz = pos.z - z;
+  const d = Math.hypot(dx, dz);
+  const min = r + PLAYER_RADIUS;
+  if (d < min) {
+    const nx = d > 0.0001 ? dx / d : 1;
+    const nz = d > 0.0001 ? dz / d : 0;
+    pos.x = x + nx * min;
+    pos.z = z + nz * min;
+  }
+}
+
+// bumper-boat physics: the player shoves creatures and bots aside, so they can't be passed through and never pin you
+function collide(x, z) {
+  for (const e of pond.ducks || []) bump(x, z, e.pos, 1.0);
+  for (const e of pond.geese || []) bump(x, z, e.pos, 1.4);
+  for (const e of pond.rubbers || []) bump(x, z, e.pos, 2.0);
+  for (const b of bots) if (!b.deadUntil) bump(x, z, b.group.position, 1.3);
+  return [x, z];
+}
+
 function movePlayer(dt) {
   const e = state.effects;
   const flip = 1;
@@ -774,6 +820,7 @@ function movePlayer(dt) {
   const step = fwd * speed * dt;
   let x = duck.position.x + Math.sin(state.heading) * step;
   let z = duck.position.z + Math.cos(state.heading) * step;
+  [x, z] = collide(x, z);
   const edge = Math.hypot(x / world.lake.radiusX, z / world.lake.radiusZ) / BARRIER;
   if (edge > 1) { x /= edge; z /= edge; }
   barrierMat.opacity = THREE.MathUtils.clamp((Math.min(edge, 1) - 0.85) / 0.15, 0, 1) * 0.45;
@@ -831,6 +878,8 @@ function renderLive() {
 
 function renderHud() {
   renderLive();
+  const idle = performance.now() - Math.max(state.lastSelfWhack, state.joinedAt || 0);
+  $("nudge").hidden = !(state.phase === "play" && idle > 10000);
   const playing = state.phase === "play";
   $("clock").textContent = clockText();
   const toNext = Math.max(0, state.nextAuto - performance.now()) / AUTO_WHACK_MS;
