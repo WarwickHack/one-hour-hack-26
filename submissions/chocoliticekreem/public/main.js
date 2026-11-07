@@ -183,6 +183,13 @@ function shortName(name) {
   return n.length > 8 ? `${n.slice(0, 8)}…` : n;
 }
 
+function showEvents(lines) {
+  const clean = lines.filter(Boolean).map((l) => l.replace(/\s*×\d+/g, "")).slice(0, 7);
+  $("file").innerHTML = clean
+    .map((l, i) => `<div class="row" style="animation-delay:${i * 140}ms">${escapeHtml(l)}</div>`)
+    .join("") || `<div class="row">🫧 a quiet whack</div>`;
+}
+
 function showFile(file, words, from) {
   const c = countWords(file.trimEnd().split("\n"));
   const chips = Object.entries(c)
@@ -198,7 +205,7 @@ function showFile(file, words, from) {
   $("file-head").innerHTML = from
     ? `<span class="dot" style="background:${playerColor(from)}"></span>${escapeHtml(shortName(from))}'s whack() · ${words.length}`
     : `whack() · ${words.length}`;
-  $("file").innerHTML = chips;
+  $("file").innerHTML = "";
 }
 
 function flash(color = "#ff3b2f") {
@@ -278,6 +285,7 @@ async function doWhack(self) {
   } else {
     pondLines = pond.applyWhack(words) || [];
     playerLines = state.phase === "play" ? applyToPlayer(c) : [];
+    showEvents([...playerLines, ...pondLines]);
     if (state.phase === "play") {
       toast("+10 survived whack()", "score");
       guide(c).slice(0, 2).forEach((g) => toast(g, "warn"));
@@ -323,6 +331,7 @@ function onWhacked({ from, fromId, words }) {
   showFile(words.join("\n") + "\n", words, from);
   const pondLines = pond.applyWhack(words) || [];
   const playerLines = applyToPlayer(countWords(words));
+  showEvents([...playerLines, ...pondLines]);
   log([...pondLines].reverse());
   log([...playerLines].reverse(), "you");
   toast("🎯 " + shortName(from) + " whacked you", "warn");
@@ -499,6 +508,7 @@ function escapeHtml(s) {
 
 async function showMenu() {
   const b = $("banner");
+  b.classList.remove("spectate");
   b.hidden = false;
   b.innerHTML = `
     <h1>LAKE WOXBRIDGE</h1>
@@ -537,18 +547,20 @@ async function end(survived, diedTo) {
   } catch { /* leaderboard is a bonus; the game still ends */ }
   const b = $("banner");
   b.hidden = false;
+  b.classList.add("spectate");
   b.innerHTML = `
-    <h1>${survived ? "SURVIVED 🏆" : "QUACKED"}</h1>
-    <p class="sub">${survived ? "" : `${escapeHtml(diedTo)} got you · `}<b>${state.score}</b></p>
-    ${await leaderboardHtml()}
-    <p><span class="key">ENTER</span> next round</p>`;
+    <div class="card">
+      <h1>${survived ? "SURVIVED 🏆" : "QUACKED"}</h1>
+      <p class="sub">${survived ? "" : `${escapeHtml(diedTo)} got you · `}<b>${state.score}</b> pts</p>
+      <p class="sub">👀 spectating · drag to look around · next round in <b id="countdown"></b></p>
+    </div>
+    ${await leaderboardHtml()}`;
 }
 
 addEventListener("keydown", (ev) => {
   const k = ev.key.toLowerCase();
-  if (k === "enter" && state.phase !== "play") {
-    if (state.phase === "menu") start();
-    else { state.phase = "menu"; showMenu(); }
+  if (k === "enter" && state.phase === "menu") {
+    start();
     return;
   }
   if (ev.target.tagName === "INPUT") return;
@@ -644,6 +656,13 @@ function frame() {
     const p = duck.position;
     net.sendPos({ x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), heading: +state.heading.toFixed(2), alive: state.phase === "play" });
   }
+  if ((state.phase === "dead" || state.phase === "won") && currentRound() !== state.round) {
+    state.phase = "menu";
+    $("banner").classList.remove("spectate");
+    showMenu();
+  }
+  const cd = $("countdown");
+  if (cd) cd.textContent = `${Math.ceil((ROUND_MS - (Date.now() % ROUND_MS)) / 1000)}s`;
   if (state.phase === "play") {
     movePlayer(dt);
     if (currentRound() !== state.round) {
@@ -667,3 +686,4 @@ function frame() {
 
 showMenu();
 frame();
+

@@ -82,3 +82,8 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 .side-left { left: 28px; }
 .side-right { right: 28px; }
 @media (max-width: 900px) { .side { position: static; transform: none; } }
+#file-panel { width: 300px; }
+#file .row { display: block; font-size: 13px; line-height: 1.35; padding: 4px 0; border-bottom: 1px solid #ffffff12; color: #f5f1e8; }
+#banner.spectate { background: transparent; pointer-events: none; justify-content: flex-start; padding-top: 70px; }
+#banner.spectate .card { background: #0b1030d0; padding: 14px 26px; border-radius: 14px; }
+#banner.spectate h1 { font-size: 34px; }
