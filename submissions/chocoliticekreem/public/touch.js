@@ -50,6 +50,12 @@
   whack.className = 'tc-ctl';
   whack.type = 'button';
   whack.textContent = 'WHACK';
+  setInterval(function () {
+    var src = document.getElementById('whack-btn');
+    var m = src && /recharging (\d+)s/.exec(src.textContent);
+    whack.textContent = m ? m[1] + 's' : 'WHACK';
+    whack.style.opacity = m ? '0.45' : '1';
+  }, 200);
 
   var play = document.createElement('button');
   play.id = 'tc-play';
