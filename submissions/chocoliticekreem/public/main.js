@@ -20,12 +20,12 @@ const GOOD = new Set(["duck", "coffee", "pizza", "rubber", "feature", "prize", "
 const $ = (id) => document.getElementById(id);
 const canvas = $("scene");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.05;
 const outline = new OutlineEffect(renderer, { defaultThickness: 0.006, defaultColor: [0.05, 0.05, 0.1], defaultAlpha: 1 });
 
 const scene = new THREE.Scene();
@@ -38,6 +38,18 @@ orbit.maxPolarAngle = Math.PI * 0.47;
 
 const world = buildWorld(scene);
 const pond = new Pond(scene, world);
+const MAX_ANISO = renderer.capabilities.getMaxAnisotropy();
+function sharpenTextures() {
+  scene.traverse((o) => {
+    const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+    for (const m of mats) for (const key of ["map", "emissiveMap"]) {
+      const t = m[key];
+      if (t && t.anisotropy !== MAX_ANISO) { t.anisotropy = MAX_ANISO; t.needsUpdate = true; }
+    }
+  });
+}
+sharpenTextures();
+setInterval(sharpenTextures, 3000);
 
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;

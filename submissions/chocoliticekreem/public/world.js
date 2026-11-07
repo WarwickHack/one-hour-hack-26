@@ -120,7 +120,7 @@ export function buildWorld(scene) {
     fog: C("#e4f3ff"), fogNight: C("#0b1030"),
   };
   scene.background = sky.horizon.clone();
-  scene.fog = new THREE.Fog(sky.fog.clone(), 150, 600);
+  scene.fog = new THREE.Fog(sky.fog.clone(), 260, 600);
 
   const skyMat = new THREE.ShaderMaterial({
     uniforms: {
