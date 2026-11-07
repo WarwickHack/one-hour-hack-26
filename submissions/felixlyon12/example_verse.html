@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MC WHACK</title>
+<style>
+  :root { --bg:#0d0b14; --fg:#f4f0ff; --dim:#7d7596; --hot:#ffd23f; --pink:#ff3ea5; --cyan:#3ef0ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:radial-gradient(circle at 50% 0%, #2a1748, var(--bg) 70%); color:var(--fg);
+         font-family: "Arial Black", Impact, system-ui, sans-serif; min-height:100vh; overflow-x:hidden; }
+  header { text-align:center; padding:24px 16px 8px; }
+  h1 { margin:0; font-size:clamp(40px,9vw,88px); letter-spacing:-2px; color:var(--hot);
+       text-shadow:4px 4px 0 var(--pink), 8px 8px 0 #000; transform:rotate(-2deg); }
+  #mc { font-size:22px; color:var(--cyan); margin-top:10px; min-height:28px; }
+  .stats { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0; font-family:system-ui,sans-serif; }
+  .stat { background:#ffffff12; border:1px solid #ffffff22; padding:6px 12px; border-radius:999px; font-size:14px; }
+  .stat b { color:var(--hot); }
+  button { font:inherit; font-size:22px; padding:14px 34px; border:0; border-radius:14px; cursor:pointer;
+           background:var(--pink); color:#fff; box-shadow:0 6px 0 #8a1458; margin:6px; }
+  button:active { transform:translateY(4px); box-shadow:0 2px 0 #8a1458; }
+  #speakers { display:flex; justify-content:center; gap:40px; margin:10px 0; }
+  .spk { width:70px; height:70px; border-radius:50%; background:radial-gradient(circle,#333 30%,#111 31%,#222 60%,#000 61%);
+         border:4px solid #444; transition:transform .06s; }
+  .spk.thump { transform:scale(1.18); border-color:var(--hot); }
+  #lyrics { max-width:900px; margin:0 auto; padding:10px 16px 60px; }
+  .line { font-size:clamp(18px,3.4vw,30px); padding:6px 10px; border-radius:8px; color:var(--dim);
+          transition:all .15s; }
+  .line .w { transition:color .05s, text-shadow .05s; }
+  .line .rhyme, .line .end { color:var(--fam); opacity:.75; }
+  .line .end { text-decoration:underline; text-underline-offset:5px; }
+  .line .adlib { font-style:italic; opacity:.6; }
+  .line.on { color:#cfc6ea; background:#ffffff10; transform:scale(1.03); }
+  .line.on .rhyme, .line.on .end { opacity:1; }
+  .line .w.hit { color:#fff; text-shadow:0 0 14px #fff; }
+  .line .rhyme.hit, .line .end.hit { color:var(--fam); text-shadow:0 0 22px var(--fam); }
+  .grid { display:flex; gap:3px; margin:2px 10px 0; }
+  .grid i { width:10px; height:4px; border-radius:2px; background:#ffffff18; }
+  .grid i.q { background:#ffffff35; } .grid i.hit { background:var(--hot); }
+  .line.hook { font-style:italic; }
+  .sec { color:var(--pink); font-size:14px; letter-spacing:3px; margin:18px 10px 4px; font-family:system-ui,sans-serif; }
+  .winner { text-align:center; font-size:40px; color:var(--hot); margin:20px; }
+  #tray { max-width:900px; margin:6px auto 0; padding:0 16px; text-align:center; font-family:system-ui,sans-serif; }
+  #tray .lbl { color:var(--dim); font-size:13px; margin-bottom:6px; }
+  .chip { display:inline-block; margin:3px; padding:3px 9px; border-radius:999px; font-size:13px;
+          background:#ffffff10; border:1px solid #ffffff25; color:#d9d2f2; transition:all .15s; }
+  .chip b { color:var(--hot); margin-left:3px; }
+  .chip.flash { background:var(--hot); color:#1a1030; transform:scale(1.2); }
+  .chip.flash b { color:#1a1030; }
+  .chip.spent { opacity:.35; text-decoration:line-through; }
+  .line .w.lw { border-bottom:2px dotted #ffffff40; }
+  #source { max-width:900px; margin:0 auto 40px; padding:0 16px; font-family:ui-monospace,monospace; font-size:12px;
+            color:var(--dim); word-break:break-word; }
+</style>
+</head>
+<body>
+<header>
+  <h1>MC WHACK</h1>
+  <div id="mc"></div>
+  <div class="stats" id="stats"></div>
+  <button id="go">▶ DROP THE BEAT</button>
+  <button id="again" style="background:#3a2d5c;box-shadow:0 6px 0 #1d1530">🎲 NEW VERSE</button>
+  <div id="speakers"><div class="spk"></div><div class="spk"></div></div>
+</header>
+<div id="tray"></div>
+<div id="lyrics"></div>
+<div id="source"></div>
+<script>
+let VERSES = [{"words": ["wifi", "brevan", "one", "oculus", "duck", "whack", "wace", "goose", "wace", "merge", "pizza", "duck", "netcraft", "marshall", "pointer", "prize", "prize", "rubber", "wace", "prize", "semicolon", "bloomberg", "push", "wace", "warwick", "prod", "midnight", "pitch", "pitch", "duck", "netcraft", "marshall", "howard", "incident", "conflict", "segfault", "quack", "push", "quack", "semicolon", "wace", "warwick", "goose", "bug", "stack", "coffee", "goose", "duck", "pointer", "hack", "compsoc", "goose", "segfault", "semicolon", "stack", "pointer", "honk", "feature", "wace", "bloomberg", "demo", "demo", "honk", "wace", "deploy", "stack", "warwick", "feature", "compsoc", "goose", "pointer", "commit", "compsoc", "incident", "hack", "commit", "feature", "hack", "warwick", "incident", "bloomberg", "goose", "semicolon", "prize", "prod", "conflict", "netcraft", "netcraft", "compsoc", "rubber", "warwick", "merge", "wifi", "prize", "incident", "bug"], "count": 96, "bars": 16, "bpm": 166, "mood": "FLEXING", "hook": "wace", "hook_count": 7, "lines": [{"tokens": [{"t": "Bow ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "down ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "quack, ", "syl": 1, "kind": "word", "fam": "ifi", "list": "quack"}, {"t": "I'm ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "lagging ", "syl": 2, "kind": "word", "fam": "ifi", "list": null}, {"t": "on ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "the ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "wifi", "syl": 2, "kind": "end", "fam": "ifi", "list": "wifi"}], "end": "wifi", "family": "ifi", "whack": true, "whack_rhymes": 0}, {"tokens": [{"t": "Pull ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "up ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "with ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "an ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "incident, ", "syl": 3, "kind": "word", "fam": "ifi", "list": "incident"}, {"t": "there's ", "syl": 2, "kind": "word", "fam": "ifi", "list": null}, {"t": "no ", "syl": 1, "kind": "word", "fam": "ifi", "list": null}, {"t": "wifi", "syl": 2, "kind": "end", "fam": "ifi", "list": "wifi"}], "end": "wifi", "family": "ifi", "whack": true, "whack_rhymes": 0}, {"tokens": [{"t": "Got ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "push ", "syl": 1, "kind": "word", "fam": "even", "list": "push"}, {"t": "on ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "chain, ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "I'm ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "hanging ", "syl": 2, "kind": "word", "fam": "even", "list": null}, {"t": "with ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "Brevan", "syl": 2, "kind": "end", "fam": "even", "list": "brevan"}], "end": "brevan", "family": "even", "whack": true, "whack_rhymes": 0}, {"tokens": [{"t": "Shout ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "out ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "segfault, ", "syl": 2, "kind": "word", "fam": "even", "list": "segfault"}, {"t": "this ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "pizza ", "syl": 2, "kind": "word", "fam": "even", "list": "pizza"}, {"t": "is ", "syl": 1, "kind": "word", "fam": "even", "list": null}, {"t": "heaven", "syl": 2, "kind": "end", "fam": "even", "list": null}], "end": "heaven", "family": "even", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Rolling ", "syl": 2, "kind": "word", "fam": "un", "list": null}, {"t": "with ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "an ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "incident, ", "syl": 3, "kind": "word", "fam": "un", "list": "incident"}, {"t": "the ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "battle ", "syl": 2, "kind": "word", "fam": "un", "list": null}, {"t": "is ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "won", "syl": 1, "kind": "end", "fam": "un", "list": null}], "end": "won", "family": "un", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Flexing ", "syl": 2, "kind": "word", "fam": "un", "list": null}, {"t": "on ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "Oculus, ", "syl": 3, "kind": "word", "fam": "un", "list": "oculus"}, {"t": "my ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "code ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "is ", "syl": 1, "kind": "word", "fam": "un", "list": null}, {"t": "never ", "syl": 2, "kind": "word", "fam": "un", "list": null}, {"t": "done", "syl": 1, "kind": "end", "fam": "un", "list": null}], "end": "done", "family": "un", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Big ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "up ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "commit, ", "syl": 2, "kind": "word", "fam": "iculous", "list": "commit"}, {"t": "this ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "bug ", "syl": 1, "kind": "word", "fam": "iculous", "list": "bug"}, {"t": "is ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "ridiculous", "syl": 4, "kind": "end", "fam": "iculous", "list": null}], "end": "ridiculous", "family": "iculous", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Pull ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "up ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "with ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "Howard, ", "syl": 2, "kind": "word", "fam": "iculous", "list": "howard"}, {"t": "my ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "code ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "is ", "syl": 1, "kind": "word", "fam": "iculous", "list": null}, {"t": "meticulous", "syl": 4, "kind": "end", "fam": "iculous", "list": null}], "end": "meticulous", "family": "iculous", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Bow ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "down ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "prod, ", "syl": 1, "kind": "word", "fam": "uck", "list": "prod"}, {"t": "I'm ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "talking ", "syl": 2, "kind": "word", "fam": "uck", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "rubber ", "syl": 2, "kind": "word", "fam": "uck", "list": "rubber"}, {"t": "duck", "syl": 1, "kind": "end", "fam": "uck", "list": "duck"}], "end": "duck", "family": "uck", "whack": true, "whack_rhymes": 0}, {"tokens": [{"t": "Ayy, ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "huh, ", "syl": 1, "kind": "adlib", "fam": "uck", "list": null}, {"t": "got ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "duck ", "syl": 1, "kind": "rhyme", "fam": "uck", "list": "duck"}, {"t": "on ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "chain, ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "build ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "is ", "syl": 1, "kind": "word", "fam": "uck", "list": null}, {"t": "stuck", "syl": 1, "kind": "end", "fam": "uck", "list": null}], "end": "stuck", "family": "uck", "whack": false, "whack_rhymes": 1}, {"tokens": [{"t": "Yeah, ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "yo, ", "syl": 1, "kind": "adlib", "fam": "ack", "list": null}, {"t": "rolling ", "syl": 2, "kind": "word", "fam": "ack", "list": null}, {"t": "with ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "the ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "stack, ", "syl": 1, "kind": "rhyme", "fam": "ack", "list": "stack"}, {"t": "the ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "duck ", "syl": 1, "kind": "word", "fam": "ack", "list": "duck"}, {"t": "just ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "said ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "quack", "syl": 1, "kind": "end", "fam": "ack", "list": "quack"}], "end": "quack", "family": "ack", "whack": true, "whack_rhymes": 1}, {"tokens": [{"t": "Shout ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "out ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "hack, ", "syl": 1, "kind": "rhyme", "fam": "ack", "list": "hack"}, {"t": "it's ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "overflowing ", "syl": 4, "kind": "word", "fam": "ack", "list": null}, {"t": "the ", "syl": 1, "kind": "word", "fam": "ack", "list": null}, {"t": "stack", "syl": 1, "kind": "end", "fam": "ack", "list": "stack"}], "end": "stack", "family": "ack", "whack": true, "whack_rhymes": 1}, {"tokens": [{"t": "Flexing ", "syl": 2, "kind": "word", "fam": "ace", "list": null}, {"t": "on ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "conflict, ", "syl": 2, "kind": "word", "fam": "ace", "list": "conflict"}, {"t": "a ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "smile ", "syl": 2, "kind": "word", "fam": "ace", "list": null}, {"t": "on ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "face", "syl": 1, "kind": "end", "fam": "ace", "list": null}], "end": "face", "family": "ace", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Big ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "up ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "semicolon, ", "syl": 4, "kind": "word", "fam": "ace", "list": "semicolon"}, {"t": "I'm ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "winning ", "syl": 2, "kind": "word", "fam": "ace", "list": null}, {"t": "the ", "syl": 1, "kind": "word", "fam": "ace", "list": null}, {"t": "race", "syl": 1, "kind": "end", "fam": "ace", "list": null}], "end": "race", "family": "ace", "whack": false, "whack_rhymes": 0}, {"tokens": [{"t": "Shout ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "out ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "to ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "conflict, ", "syl": 2, "kind": "word", "fam": "oose", "list": "conflict"}, {"t": "I'm ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "chased ", "syl": 2, "kind": "word", "fam": "oose", "list": null}, {"t": "by ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "goose", "syl": 1, "kind": "end", "fam": "oose", "list": "goose"}], "end": "goose", "family": "oose", "whack": true, "whack_rhymes": 0}, {"tokens": [{"t": "Got ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "a ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "goose ", "syl": 1, "kind": "rhyme", "fam": "oose", "list": "goose"}, {"t": "on ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "chain, ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "my ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "code ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "is ", "syl": 1, "kind": "word", "fam": "oose", "list": null}, {"t": "running ", "syl": 2, "kind": "word", "fam": "oose", "list": null}, {"t": "loose", "syl": 1, "kind": "end", "fam": "oose", "list": null}], "end": "loose", "family": "oose", "whack": false, "whack_rhymes": 1}, {"tokens": [{"t": "Everybody ", "syl": 4, "kind": "text", "fam": null, "list": null}, {"t": "say ", "syl": 1, "kind": "text", "fam": null, "list": null}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE! ", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}, {"t": "WACE!", "syl": 1, "kind": "end", "fam": "hook", "list": "wace"}], "end": "wace", "family": "hook", "whack": true, "whack_rhymes": 0}], "flow": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12], "true_rhymes": 11, "mc": "MC WHACK"}];
+let ctx, master;
+let runId = 0;  // bumps on every stop, so stale timers from an old performance do nothing
+
+const lyrics = document.getElementById("lyrics");
+let lineEls = [];   // [verseIndex][lineIndex]
+let famHue = {};
+function render() {
+lyrics.innerHTML = "";
+lineEls = []; famHue = {};
+VERSES.forEach((v, vi) => {
+  const sec = document.createElement("div");
+  sec.className = "sec";
+  sec.textContent = `🎤 ${v.mc} · ${v.bpm} BPM · ${v.mood}`;
+  lyrics.appendChild(sec);
+  lineEls[vi] = [];
+  v.lines.forEach((l, li) => {
+    if (li === v.bars) {
+      const h = document.createElement("div"); h.className = "sec"; h.textContent = "HOOK"; lyrics.appendChild(h);
+    }
+    const d = document.createElement("div");
+    d.className = "line" + (l.family === "hook" ? " hook" : "");
+    const hue = l.family === "hook" ? 48 : (famHue[l.family] ??= (Object.keys(famHue).length * 67 + 300) % 360);
+    d.style.setProperty("--fam", `hsl(${hue} 95% 65%)`);
+    let s = 0;
+    l.tokens.forEach(t => {
+      const sp = document.createElement("span");
+      sp.className = "w " + t.kind + (t.list ? " lw" : "");
+      if (t.list) sp.dataset.list = t.list;
+      sp.textContent = t.t.trimEnd();
+      sp.dataset.step = v.flow[s];        // the 16th note this word starts on
+      s += t.syl;
+      d.appendChild(sp);
+      const gap = t.t.slice(t.t.trimEnd().length) || (t.kind === "adlib" ? " " : "");
+      if (gap) d.appendChild(document.createTextNode(gap));
+    });
+    const g = document.createElement("div"); g.className = "grid";
+    for (let k = 0; k < 16; k++) { const c = document.createElement("i"); if (k % 4 === 0) c.className = "q"; g.appendChild(c); }
+    d.appendChild(g);
+    lyrics.appendChild(d);
+    lineEls[vi].push(d);
+  });
+  if (v.winner) {
+    const w = document.createElement("div"); w.className = "winner"; w.textContent = `🏆 ${v.mc} WINS`;
+    lyrics.appendChild(w);
+  }
+});
+renderTray(VERSES[0]);
+showStats(VERSES[0]);
+}
+
+// The words whack() drew, as chips that count down as the verse spends them.
+function renderTray(v) {
+  const counts = {};
+  v.words.forEach(w => counts[w] = (counts[w] || 0) + 1);
+  const tray = document.getElementById("tray");
+  tray.innerHTML = `<div class="lbl">whack() drew ${v.count} words · each lights up as the verse spends it</div>`;
+  Object.entries(counts).forEach(([w, n]) => {
+    const c = document.createElement("span");
+    c.className = "chip"; c.dataset.w = w; c.dataset.left = n;
+    c.innerHTML = `${w}<b>×${n}</b>`;
+    tray.appendChild(c);
+  });
+}
+function spend(word) {
+  const c = document.querySelector(`.chip[data-w="${word}"]`);
+  if (!c) return;
+  const left = Math.max(0, +c.dataset.left - 1);
+  c.dataset.left = left;
+  c.querySelector("b").textContent = "×" + left;
+  c.classList.add("flash");
+  setTimeout(() => c.classList.remove("flash"), 220);
+  if (!left) c.classList.add("spent");
+}
+
+function showStats(v) {
+  document.getElementById("mc").textContent = `now on the mic: ${v.mc}`;
+  document.getElementById("stats").innerHTML =
+    `<span class="stat">whack() gave <b>${v.count}</b> words</span>` +
+    `<span class="stat"><b>${v.bars}</b> bars</span><span class="stat"><b>${v.bpm}</b> BPM</span>` +
+    `<span class="stat">mood <b>${v.mood}</b></span>` +
+    `<span class="stat">hook <b>${v.hook.toUpperCase()}</b> ×${v.hook_count}</span>`;
+}
+// No baked-in verses? Then run the real spit.py + whack.py right here in the browser (Pyodide),
+// so every page load (and every NEW VERSE) is a fresh whack() call.
+let py;
+async function liveVerse() {
+  const go = document.getElementById("go"), again = document.getElementById("again");
+  stopPerformance();          // cut the beat and the voice before the new verse
+  go.disabled = again.disabled = true;
+  document.getElementById("mc").textContent = "calling whack()…";
+  if (!py) {
+    document.getElementById("mc").textContent = "warming up the mic (loading Python)…";
+    await new Promise((ok, fail) => {
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+      s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+    });
+    py = await loadPyodide();
+    for (const f of ["whack.py", "spit.py"]) {
+      const res = await fetch(`${f}?v=${Date.now()}`, { cache: "no-store" });  // skip stale CDN copies
+      if (!res.ok) throw new Error(`couldn't fetch ${f} (HTTP ${res.status})`);
+      py.FS.writeFile(f, await res.text());
+    }
+    py.runPython("import sys; sys.path.insert(0, '.')");
+  }
+  VERSES = JSON.parse(py.runPython("import json, spit; json.dumps(spit.verse())"));
+  render();
+  go.disabled = again.disabled = false;
+}
+
+if (VERSES.length) {
+  render();
+  document.getElementById("again").style.display = "none";
+} else {
+  liveVerse().catch(e => {
+    document.getElementById("mc").textContent = "couldn't load Python here: run python3 spit.py instead";
+    document.getElementById("source").textContent = "error: " + (e && e.message ? e.message : e);
+    console.error(e);
+  });
+}
+document.getElementById("again").onclick = () => liveVerse();
+
+// ---- the beat: a tiny synth drum machine ----
+function stopPerformance() {
+  runId++;
+  if (master) { master.disconnect(); master = null; }
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  document.querySelectorAll(".on, .hit").forEach(e => e.classList.remove("on", "hit"));
+  if (VERSES.length) renderTray(VERSES[0]);  // refill the chips
+  document.getElementById("go").disabled = false;
+}
+function kick(t) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.25);
+  g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+  o.connect(g).connect(master); o.start(t); o.stop(t + 0.3);
+}
+function noise(t, len, freq, vol) {
+  const buf = ctx.createBuffer(1, ctx.sampleRate * len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = buf; f.type = "highpass"; f.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+  s.connect(f).connect(g).connect(master); s.start(t);
+}
+const KICK = [0, 3, 8, 10], SNARE = [4, 12];
+
+// ---- the guitar: a 2-bar power-chord riff in E minor, looped on the 16ths ----
+const E2 = 82.41, G2 = 98.0, A2 = 110.0, BB2 = 116.54, D3 = 146.83;
+const RIFF = [
+  { 0: E2, 3: E2, 6: G2, 8: A2, 11: G2, 14: E2 },   // bar 1
+  { 0: E2, 3: E2, 6: G2, 8: BB2, 10: A2, 12: G2, 14: D3 },  // bar 2
+];
+let fuzz;
+function distortion() {
+  if (fuzz && fuzz.context === ctx) return fuzz;
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < curve.length; i++) { const x = i / 512 - 1; curve[i] = Math.tanh(4 * x); }
+  fuzz = ctx.createWaveShaper(); fuzz.curve = curve; fuzz.oversample = "4x";
+  return fuzz;
+}
+function guitar(t, freq, len) {
+  const shaper = ctx.createWaveShaper(); shaper.curve = distortion().curve;
+  const tone = ctx.createBiquadFilter(), g = ctx.createGain();
+  tone.type = "lowpass"; tone.frequency.setValueAtTime(2600, t); tone.frequency.exponentialRampToValueAtTime(700, t + len);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.001, t + len);
+  shaper.connect(tone).connect(g).connect(master);
+  [freq, freq * 1.5, freq * 2].forEach((f, i) => {   // root, fifth, octave = a power chord
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.type = "sawtooth"; o.frequency.value = f; o.detune.value = (i - 1) * 6;
+    og.gain.value = [0.5, 0.35, 0.2][i];
+    o.connect(og).connect(shaper); o.start(t); o.stop(t + len + 0.05);
+  });
+}
+function thump() {
+  document.querySelectorAll(".spk").forEach(s => { s.classList.add("thump"); setTimeout(() => s.classList.remove("thump"), 90); });
+}
+
+// ---- the voice ----
+function rap(text, seconds) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  // every line is 12 syllables; a voice at rate 1 says about 4 syllables a second
+  u.rate = Math.min(3, Math.max(0.8, 12 / (4 * seconds)));
+  u.pitch = 0.8;
+  speechSynthesis.speak(u);
+}
+
+async function perform() {
+  stopPerformance();
+  const run = runId;
+  ctx = ctx || new AudioContext();
+  await ctx.resume();
+  master = ctx.createGain();
+  master.connect(ctx.destination);
+  document.getElementById("go").disabled = true;
+  for (let vi = 0; vi < VERSES.length; vi++) {
+    const v = VERSES[vi];
+    showStats(v);
+    const step = 60 / v.bpm / 4;                 // a 16th note
+    let barSec = step * 16;
+    const stepsPerLine = barSec < 2.4 ? 32 : 16; // fast beats get two bars per line
+    const total = (v.lines.length + 1) * stepsPerLine; // +1 bar of intro
+    let start = ctx.currentTime + 0.1;
+    await new Promise(done => {
+      let n = 0;
+      const tick = () => {
+        if (run !== runId) return done();
+        // schedule 16ths slightly ahead, and fire visuals on time
+        const t = start + n * step;
+        if (KICK.includes(n % 16)) { kick(t); setTimeout(() => run === runId && thump(), (t - ctx.currentTime) * 1000); }
+        if (SNARE.includes(n % 16)) noise(t, 0.18, 1200, 0.6);
+        if (n % 2 === 0) noise(t, 0.04, 7000, 0.25);
+        const note = RIFF[Math.floor(n / 16) % 2][n % 16];
+        if (note) guitar(t, note, step * 1.8);
+        const li = Math.floor(n / stepsPerLine) - 1;
+        const scale = stepsPerLine / 16, sub = n % stepsPerLine;
+        if (li >= 0 && li < v.lines.length && sub % scale === 0) {
+          const el = lineEls[vi][li], st = sub / scale;
+          setTimeout(() => {
+            if (run !== runId) return;
+            el.querySelectorAll(`.w[data-step="${st}"]`).forEach(w => {
+              w.classList.add("hit");
+              if (w.dataset.list) spend(w.dataset.list);
+            });
+            const cell = el.querySelectorAll(".grid i")[st];
+            if (v.flow.includes(st)) cell.classList.add("hit");
+          }, Math.max(0, (t - ctx.currentTime) * 1000));
+        }
+        if (n % stepsPerLine === 0 && li >= 0 && li < v.lines.length) {
+          setTimeout(() => {
+            if (run !== runId) return;
+            lineEls[vi].forEach(e => e.classList.remove("on"));
+            const el = lineEls[vi][li];
+            el.classList.add("on");
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            rap(v.lines[li].tokens.map(t => t.t).join(" "), stepsPerLine * step * 13 / 16);
+          }, Math.max(0, (t - ctx.currentTime) * 1000));
+        }
+        n++;
+        if (n >= total) { setTimeout(done, stepsPerLine * step * 1000); return; }
+        setTimeout(tick, Math.max(0, (start + n * step - ctx.currentTime - 0.05) * 1000));
+      };
+      tick();
+    });
+    if (run !== runId) return;  // stopped (e.g. NEW VERSE): leave the page to the new verse
+    lineEls[vi].forEach(e => e.classList.remove("on"));
+  }
+  document.querySelectorAll(".hit").forEach(e => e.classList.remove("hit"));
+  document.getElementById("go").disabled = false;
+  document.getElementById("mc").textContent = "🎤 mic drop. hit NEW VERSE for a fresh whack().";
+}
+document.getElementById("go").onclick = perform;
+</script>
+</body>
+</html>
