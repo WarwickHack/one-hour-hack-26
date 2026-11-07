@@ -14,7 +14,7 @@ node server.js
 
 Then open http://localhost:3026. There are no dependencies, just Node 18+ and a browser. Three.js loads from a CDN.
 
-**WASD** swim · **SPACE** `whack()` another duck (10s cooldown) · **ENTER** play
+**W/S** swim · **A/D** turn · **SPACE** `whack()` another duck (10s cooldown) · **ENTER** play
 
 ## Screenshot
 
@@ -28,7 +28,7 @@ Then open http://localhost:3026. There are no dependencies, just Node 18+ and a 
 |---|---|
 | `goose` / `honk` | geese spawn and hunt you |
 | `prod` | a meteor lands near you |
-| `segfault` | your controls invert |
+| `segfault` | core dumped: −10 points |
 | `sleep` | you slow down |
 | `null` | geese can't dereference you, so you go invisible |
 | `coffee` / `pizza` | speed, +1 ❤ |
@@ -39,7 +39,7 @@ Then open http://localhost:3026. There are no dependencies, just Node 18+ and a 
 | `merge` / `conflict` | two geese fight, one force-pushes itself off the lake |
 | `midnight` | time flies, pushing the clock toward 00:00 |
 
-Each sponsor and campus word gives you a short power:
+When a sponsor or campus word shows up **3+ times** in one whack, you get its power:
 
 | Word | Power |
 |---|---|
@@ -55,7 +55,7 @@ Each sponsor and campus word gives you a short power:
 | `wifi` | **Eduroam dropped**: you lag |
 | `demo` | **Demo gods**: 3s invulnerable |
 
-The clock runs from 22:30 to 00:00, when PRs close. Each `whack()` you survive is worth the number of words it wrote. Survive to midnight and your PR merges 🏆. The leaderboard keeps each duck's best score.
+The clock runs from 22:30 to 00:00, when PRs close. Scoring: +10 for each `whack()` you survive, +25 for each pizza or coffee you eat, +30 when your `whack()` lands on another duck, and +500 for making it to midnight 🏆. Red rings on the water mark danger: hunting geese and incoming meteors. The leaderboard keeps each duck's best score.
 
 ## Multiplayer
 

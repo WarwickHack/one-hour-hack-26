@@ -528,10 +528,20 @@ export class Pond {
     mesh.castShadow = true;
     mesh.visible = false;
     this.scene.add(mesh);
-    const flight = 1.3;
+    const marker = new THREE.Mesh(
+      new THREE.RingGeometry(2.2, 3, 32),
+      new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }),
+    );
+    marker.rotation.x = -Math.PI / 2;
+    marker.position.set(target.x, (this.world.lake?.waterY ?? 0) + 0.35, target.z);
+    this.scene.add(marker);
+    const flight = 2.4;
     let age = -delay;
     this.addEffect((dt) => {
       age += dt;
+      const warn = clamp01((age + delay) / (flight + delay));
+      marker.scale.setScalar(1.6 - warn * 0.6);
+      marker.material.opacity = 0.5 + 0.4 * Math.abs(Math.sin((age + delay) * 10));
       if (age < 0) return true;
       mesh.visible = true;
       const k = clamp01(age / flight);
@@ -541,6 +551,9 @@ export class Pond {
       this.puff(mesh.position, Math.random() < 0.5 ? 0xff7a00 : 0x555555, 2, 0.9, 0.6);
       if (k < 1) return true;
       this.scene.remove(mesh);
+      this.scene.remove(marker);
+      marker.geometry.dispose();
+      marker.material.dispose();
       this.world.flash?.(0xff8800);
       this.ring(target, 0xffffff, 16, 1.6);
       this.ring(target, 0xff8800, 9, 1.1);

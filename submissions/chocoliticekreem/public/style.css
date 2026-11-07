@@ -25,7 +25,7 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
   animation: toast 3.2s forwards; white-space: nowrap; }
 #toasts div.tick { color: #ffd166; }
 @keyframes toast { 0% { opacity: 0; transform: translateY(-6px); } 8%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
-#effects { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%); color: #7ee0c3; font-weight: 800;
+#effects { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); color: #7ee0c3; font-weight: 800;
   font-size: 15px; text-shadow: 0 2px 6px #000; pointer-events: none; }
 
 #controls { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;
@@ -55,3 +55,5 @@ html, body { height: 100%; overflow: hidden; background: #0b1030; color: #f5f1e8
 #next span { position: relative; }
 #toasts div.score { color: #ffd166; }
 #toasts div.warn { color: #fff; background: #c2253ad0; font-size: 20px; }
+#whack-btn { white-space: nowrap; }
+.hint { white-space: nowrap; }

@@ -1,9 +1,9 @@
 import * as THREE from "three";
 
-const LAKE_RX = 52;
-const LAKE_RZ = 35;
+const LAKE_RX = 78;
+const LAKE_RZ = 52;
 const WATER_Y = 0.05;
-const CAMERA_FACE = new THREE.Vector3(0, 0, 60);
+const CAMERA_FACE = new THREE.Vector3(0, 0, 90);
 
 const C = (hex) => new THREE.Color(hex);
 const smoothstep = (a, b, x) => {
@@ -162,7 +162,7 @@ export function buildWorld(scene) {
   sun.target.position.set(0, 0, -10);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
-  Object.assign(sun.shadow.camera, { left: -115, right: 115, top: 115, bottom: -115, near: 1, far: 360 });
+  Object.assign(sun.shadow.camera, { left: -170, right: 170, top: 170, bottom: -170, near: 1, far: 450 });
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0005;
   sun.shadow.normalBias = 0.03;
@@ -172,7 +172,7 @@ export function buildWorld(scene) {
   scene.add(flashLight);
 
   // ---------- ground, hills ----------
-  const groundGeo = new THREE.PlaneGeometry(420, 420, 70, 70);
+  const groundGeo = new THREE.PlaneGeometry(630, 630, 90, 90);
   groundGeo.rotateX(-Math.PI / 2);
   const gCols = [];
   const base = C("#6a9a4a");
@@ -189,7 +189,7 @@ export function buildWorld(scene) {
   const hillGeo = new THREE.IcosahedronGeometry(1, 1);
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2 + Math.random() * 0.3;
-    const r = 190 + Math.random() * 40;
+    const r = 285 + Math.random() * 60;
     const hill = new THREE.Mesh(hillGeo, std(i % 2 ? "#5d8a40" : "#557f3c"));
     hill.position.set(Math.cos(a) * r, -4, Math.sin(a) * r);
     hill.scale.set(30 + Math.random() * 20, 10 + Math.random() * 10, 30 + Math.random() * 20);
@@ -223,7 +223,7 @@ export function buildWorld(scene) {
   const farHills = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), std(0xffffff), HILLS);
   const hillCols = ["#5d8a40", "#557f3c", "#6a9648", "#4f7838", "#78a052"].map(C);
   for (let i = 0; i < HILLS; i++) {
-    const [x, z] = ringPoint(190, 470);
+    const [x, z] = ringPoint(285, 515);
     const w = 35 + Math.random() * 45;
     setInst(farHills, i, x, -6, z, w, 12 + Math.random() * 22, w * (0.6 + Math.random() * 0.6), Math.random() * Math.PI);
     farHills.setColorAt(i, hillCols[i % hillCols.length]);
@@ -237,12 +237,12 @@ export function buildWorld(scene) {
   let nc = 0;
   let nb = 0;
   for (let c = 0; c < 90; c++) {
-    const [cx, cz] = ringPoint(150, 420);
+    const [cx, cz] = ringPoint(225, 500);
     const n = 6 + Math.floor(Math.random() * 10);
     for (let k = 0; k < n; k++) {
       const x = cx + (Math.random() - 0.5) * 30;
       const z = cz + (Math.random() - 0.5) * 30;
-      if (Math.max(Math.abs(x), Math.abs(z)) < 95) continue;
+      if (Math.max(Math.abs(x), Math.abs(z)) < 150) continue;
       const s = 1.2 + Math.random() * 1.6;
       const useCone = Math.random() < 0.5;
       const mesh = useCone ? farCones : farBlobs;
@@ -279,7 +279,7 @@ export function buildWorld(scene) {
   const roofMat = std("#6f6a64");
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * Math.PI * 2 + (Math.random() - 0.5) * 0.25;
-    const r = 160 + Math.random() * 160;
+    const r = 240 + Math.random() * 240;
     const w = 14 + Math.random() * 18;
     const h = 8 + Math.random() * (i % 5 === 0 ? 26 : 12);
     const d = 10 + Math.random() * 12;
@@ -393,7 +393,7 @@ export function buildWorld(scene) {
   // Library
   {
     const g = new THREE.Group();
-    g.position.set(-30, 0, -84);
+    g.position.set(-45, 0, -126);
     const label = addLabel(g, "Library", 32);
     const t = addTarget(["library"], label);
     const tower = windowBox(t, 12, 26, 12, 6, 13, "#d9d2c4", "#2d3b55", "#6f6a66");
@@ -412,7 +412,7 @@ export function buildWorld(scene) {
   // The Oculus
   {
     const g = new THREE.Group();
-    g.position.set(50, 0, -66);
+    g.position.set(75, 0, -99);
     const label = addLabel(g, "The Oculus", 15);
     const t = addTarget(["oculus"], label);
     const glass = glowMat(t, new THREE.MeshStandardMaterial({
@@ -439,7 +439,7 @@ export function buildWorld(scene) {
   // Warwick Arts Centre
   {
     const g = new THREE.Group();
-    g.position.set(-86, 0, -36);
+    g.position.set(-129, 0, -54);
     const label = addLabel(g, "Warwick Arts Centre", 18);
     const t = addTarget(["warwick"], label);
     const body = windowBox(t, 26, 7, 14, 13, 3, "#9a6a50", "#2b2f45", "#4a3f55");
@@ -470,7 +470,7 @@ export function buildWorld(scene) {
   // CS building (CompSoc)
   {
     const g = new THREE.Group();
-    g.position.set(84, 0, -21);
+    g.position.set(126, 0, -31.5);
     const label = addLabel(g, "CS Building (CompSoc)", 17);
     const t = addTarget(["compsoc"], label);
     const body = windowBox(t, 14, 11, 12, 7, 5, "#b9c2c9", "#24304a", "#555c63");
@@ -498,7 +498,7 @@ export function buildWorld(scene) {
   }
 
   // Piazza / Rootes
-  const piazza = new THREE.Vector3(12, 0.1, -54);
+  const piazza = new THREE.Vector3(18, 0.1, -81);
   {
     const g = new THREE.Group();
     g.position.set(piazza.x, 0, piazza.z);
@@ -546,12 +546,12 @@ export function buildWorld(scene) {
 
   // ---------- sponsor billboards ----------
   const sponsors = [
-    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-69, 10.5], bg: "#0f2a4a", fg: "#ffffff" },
-    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-66, -25.5], bg: "#161616", fg: "#d8b45a" },
-    { name: "Capital One", keys: ["capital", "one"], pos: [69, 10.5], bg: "#004977", fg: "#ffffff" },
-    { name: "Bloomberg", keys: ["bloomberg"], pos: [69, -28.5], bg: "#000000", fg: "#ff9a1a" },
-    { name: "Netcraft", keys: ["netcraft"], pos: [-45, 43.5], bg: "#1d3c6e", fg: "#ffffff" },
-    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [45, 43.5], bg: "#f25533", fg: "#ffffff" },
+    { name: "Marshall Wace", keys: ["marshall", "wace"], pos: [-103.5, 15.75], bg: "#0f2a4a", fg: "#ffffff" },
+    { name: "Brevan Howard", keys: ["brevan", "howard"], pos: [-99, -38.25], bg: "#161616", fg: "#d8b45a" },
+    { name: "Capital One", keys: ["capital", "one"], pos: [103.5, 15.75], bg: "#004977", fg: "#ffffff" },
+    { name: "Bloomberg", keys: ["bloomberg"], pos: [103.5, -42.75], bg: "#000000", fg: "#ff9a1a" },
+    { name: "Netcraft", keys: ["netcraft"], pos: [-67.5, 65.25], bg: "#1d3c6e", fg: "#ffffff" },
+    { name: "incident.io", keys: ["incident", "io", "incident.io"], pos: [67.5, 65.25], bg: "#f25533", fg: "#ffffff" },
   ];
   const postGeo = new THREE.CylinderGeometry(0.15, 0.18, 5.2, 6);
   const postMat = std("#3a3a40");
@@ -622,8 +622,8 @@ export function buildWorld(scene) {
   // ---------- trees ----------
   const treeSpots = [];
   for (let tries = 0; treeSpots.length < 80 && tries < 2000; tries++) {
-    const x = (Math.random() * 2 - 1) * 125;
-    const z = (Math.random() * 2 - 1) * 125;
+    const x = (Math.random() * 2 - 1) * 185;
+    const z = (Math.random() * 2 - 1) * 185;
     const f = Math.sqrt((x / LAKE_RX) ** 2 + (z / LAKE_RZ) ** 2);
     if (f < 1.6 || nearAvoid(x, z, 3) || nearPath(x, z, 3)) continue;
     if (treeSpots.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < 4.5)) continue;
