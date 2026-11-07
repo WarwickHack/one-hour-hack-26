@@ -321,7 +321,7 @@ function breed(target) {
   const my = reset("breed");
   ["calls", "gen", "rate", "restarts"].forEach(id => $(id).textContent = "0");
   status(target ? `breeding a program that prints <b>${target}</b>…` : "asking whack() what to breed…");
-  es = new EventSource("/api/breed?target=" + encodeURIComponent(target || ""));
+  es = new EventSource("/api/breed?target=" + encodeURIComponent(target || "") + (location.search.includes("fast") ? "&fast=1" : ""));
   es.onmessage = e => {
     if (my !== token) return;
     const ev = JSON.parse(e.data);
@@ -405,6 +405,7 @@ async function execute(prog, trace, ending, target, my, steps) {
     $("stack").innerHTML = f.stack.length ? f.stack.map((v, i) =>
       `<div class="bar${i === f.stack.length - 1 ? " top" : ""}"><i style="height:${Math.max(3, v / 255 * 100)}%"></i><b>${v}</b><small>${glyph(v)}</small></div>`).join("")
       : `<span class="empty">empty stack</span>`;
+    spawn([f.w], 1);
     $("note").innerHTML = `<b style="color:${colorOf(f.w)}">${f.w}</b>${DOCS[f.w] || ""}<br><span>${f.note || "&nbsp;"}</span>`;
     renderTiles(f.out, target);
     if (f.note && f.note.startsWith("prints")) await sleep(delay * 1.6);

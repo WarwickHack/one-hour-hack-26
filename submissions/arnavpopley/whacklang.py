@@ -485,7 +485,8 @@ def census(n=1000):
         bar = round(30 * k / n)
         print(f"  {label:<28} " + green("█" * bar) + dim("░" * (30 - bar)) + f" {k / n:6.1%}")
     if best:
-        print(f"\n  The most eloquent wild program said {best.decode()!r}. It was {len(best_prog)} words long.")
+        said = best.decode()[:30] + ("..." if len(best) > 30 else "")
+        print(f"\n  The most eloquent wild program said {said!r}. It was {len(best_prog)} words long.")
     print("\n  Nothing in the wild says HONK. Try: python3 whacklang.py evolve HONK")
 
 
